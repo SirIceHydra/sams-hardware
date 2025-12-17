@@ -18,14 +18,14 @@ const Hero = () => {
     const heroTextRef = useRef(null)
 
     const departments = [
-        { name: 'General hardware', category: 'Hand Tools', image: '/images/departments/General hardware.jpeg' },
-        { name: 'Building materials', category: 'Hand Tools', image: '/images/departments/Building materials.jpeg' },
-        { name: 'Lighting', category: 'Electrical', image: '/images/departments/Lighting.jpeg' },
-        { name: 'Electrical', category: 'Electrical', image: '/images/departments/Electrical.jpeg' },
-        { name: 'Paint', category: 'Hand Tools', image: '/images/departments/Paint.jpeg' },
-        { name: 'Plumbing', category: 'Plumbing', image: '/images/departments/Plumbing.jpeg' },
-        { name: 'Handtools', category: 'Hand Tools', image: '/images/departments/Handtools.jpeg' },
-        { name: 'Powertools', category: 'Power Tools', image: '/images/departments/Powertools.jpeg' }
+        { name: 'General hardware', category: 'Hand Tools', image: '/Images/Departments/General hardware.jpeg' },
+        { name: 'Building materials', category: 'Hand Tools', image: '/Images/Departments/Building materials.jpeg' },
+        { name: 'Lighting', category: 'Electrical', image: '/Images/Departments/Lighting.jpeg' },
+        { name: 'Electrical', category: 'Electrical', image: '/Images/Departments/Electrical.jpeg' },
+        { name: 'Paint', category: 'Hand Tools', image: '/Images/Departments/Paint.jpeg' },
+        { name: 'Plumbing', category: 'Plumbing', image: '/Images/Departments/Plumbing.jpeg' },
+        { name: 'Handtools', category: 'Hand Tools', image: '/Images/Departments/Handtools.jpeg' },
+        { name: 'Powertools', category: 'Power Tools', image: '/Images/Departments/Powertools.jpeg' }
     ]
 
     const handleDepartmentClick = (department) => {
@@ -33,9 +33,9 @@ const Hero = () => {
     }
 
     const carouselImages = [
-        { image: '/images/carausel_header/handtools.jpeg', department: 'Handtools', link: '/department/handtools' },
-        { image: '/images/carausel_header/plumbing.jpeg', department: 'Plumbing', link: '/department/plumbing' },
-        { image: '/images/carausel_header/powertools.jpeg', department: 'Powertools', link: '/department/powertools' }
+        { image: '/Images/carausel_header/handtools.jpeg', department: 'Handtools', link: '/department/handtools' },
+        { image: '/Images/carausel_header/plumbing.jpeg', department: 'Plumbing', link: '/department/plumbing' },
+        { image: '/Images/carausel_header/powertools.jpeg', department: 'Powertools', link: '/department/powertools' }
     ]
 
     // Scroll-triggered animations
