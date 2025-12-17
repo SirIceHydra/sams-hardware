@@ -2,8 +2,10 @@
 import { useEffect, useState } from "react"
 import Loading from "@/components/Loading"
 import { orderDummyData } from "@/assets/assets"
+import { XIcon } from "lucide-react"
 
 export default function StoreOrders() {
+    const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || 'R'
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(true)
     const [selectedOrder, setSelectedOrder] = useState(null)
@@ -38,47 +40,62 @@ export default function StoreOrders() {
     if (loading) return <Loading />
 
     return (
-        <>
-            <h1 className="text-2xl text-slate-500 mb-5">Store <span className="text-slate-800 font-medium">Orders</span></h1>
+        <div className="text-[var(--te-grey-400)] mb-28">
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-8">
+                <div className="w-2 h-2 rounded-full bg-[var(--te-yellow)]" style={{ boxShadow: '0 0 8px var(--te-yellow)' }} />
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--te-dark)] uppercase tracking-tight">Store Orders</h1>
+            </div>
+            
             {orders.length === 0 ? (
-                <p>No orders found</p>
+                <div className="flex flex-col items-center justify-center py-20 text-[var(--te-grey-300)]">
+                    <div className="w-16 h-16 rounded-full border-2 border-[var(--te-grey-200)] flex items-center justify-center mb-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+                            <path d="m3.3 7 8.7 5 8.7-5"/>
+                            <path d="M12 22V12"/>
+                        </svg>
+                    </div>
+                    <h2 className="text-lg font-bold text-[var(--te-dark)] uppercase tracking-widest">No Orders</h2>
+                    <p className="text-sm text-[var(--te-grey-400)] mt-2 tracking-wide">No orders found yet</p>
+                </div>
             ) : (
-                <div className="overflow-x-auto max-w-4xl rounded-md shadow border border-gray-200">
-                    <table className="w-full text-sm text-left text-gray-600">
-                        <thead className="bg-gray-50 text-gray-700 text-xs uppercase tracking-wider">
+                <div className="overflow-x-auto bg-[var(--te-cream)] border border-[var(--te-grey-200)] rounded-sm">
+                    <table className="w-full text-sm text-left">
+                        <thead className="bg-[var(--te-white)] border-b border-[var(--te-grey-200)]">
                             <tr>
-                                {["Sr. No.", "Customer", "Total", "Payment", "Coupon", "Status", "Date"].map((heading, i) => (
-                                    <th key={i} className="px-4 py-3">{heading}</th>
+                                {["#", "Customer", "Total", "Payment", "Coupon", "Status", "Date"].map((heading, i) => (
+                                    <th key={i} className="px-4 py-3 text-[10px] font-semibold text-[var(--te-grey-400)] tracking-[0.15em] uppercase">{heading}</th>
                                 ))}
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody>
                             {orders.map((order, index) => (
                                 <tr
                                     key={order.id}
-                                    className="hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
+                                    className="border-b border-[var(--te-grey-200)] last:border-0 hover:bg-[var(--te-white)] transition-colors cursor-pointer"
                                     onClick={() => openModal(order)}
                                 >
-                                    <td className="pl-6 text-green-600" >
+                                    <td className="px-4 py-4 font-bold font-[family-name:var(--font-jetbrains)] text-[var(--te-orange)]">
                                         {index + 1}
                                     </td>
-                                    <td className="px-4 py-3">{order.user?.name}</td>
-                                    <td className="px-4 py-3 font-medium text-slate-800">${order.total}</td>
-                                    <td className="px-4 py-3">{order.paymentMethod}</td>
-                                    <td className="px-4 py-3">
+                                    <td className="px-4 py-4 font-semibold text-[var(--te-dark)] tracking-wide">{order.user?.name}</td>
+                                    <td className="px-4 py-4 font-bold text-[var(--te-dark)] font-[family-name:var(--font-jetbrains)]">{currency}{order.total}</td>
+                                    <td className="px-4 py-4 text-xs tracking-wide uppercase">{order.paymentMethod}</td>
+                                    <td className="px-4 py-4">
                                         {order.isCouponUsed ? (
-                                            <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">
+                                            <span className="bg-[var(--te-green)]/10 text-[var(--te-green)] text-[10px] px-2 py-1 rounded-sm font-bold tracking-wider border border-[var(--te-green)]/20">
                                                 {order.coupon?.code}
                                             </span>
                                         ) : (
-                                            "—"
+                                            <span className="text-[var(--te-grey-300)]">—</span>
                                         )}
                                     </td>
-                                    <td className="px-4 py-3" onClick={(e) => { e.stopPropagation() }}>
+                                    <td className="px-4 py-4" onClick={(e) => { e.stopPropagation() }}>
                                         <select
                                             value={order.status}
                                             onChange={e => updateOrderStatus(order.id, e.target.value)}
-                                            className="border-gray-300 rounded-md text-sm focus:ring focus:ring-blue-200"
+                                            className="border border-[var(--te-grey-200)] rounded-sm text-xs px-2 py-1.5 bg-[var(--te-white)] text-[var(--te-dark)] focus:outline-none focus:border-[var(--te-orange)] font-medium"
                                         >
                                             <option value="ORDER_PLACED">ORDER_PLACED</option>
                                             <option value="PROCESSING">PROCESSING</option>
@@ -86,8 +103,8 @@ export default function StoreOrders() {
                                             <option value="DELIVERED">DELIVERED</option>
                                         </select>
                                     </td>
-                                    <td className="px-4 py-3 text-gray-500">
-                                        {new Date(order.createdAt).toLocaleString()}
+                                    <td className="px-4 py-4 text-xs text-[var(--te-grey-400)] tracking-wide">
+                                        {new Date(order.createdAt).toLocaleDateString()}
                                     </td>
                                 </tr>
                             ))}
@@ -98,36 +115,45 @@ export default function StoreOrders() {
 
             {/* Modal */}
             {isModalOpen && selectedOrder && (
-                <div onClick={closeModal} className="fixed inset-0 flex items-center justify-center bg-black/50 text-slate-700 text-sm backdrop-blur-xs z-50" >
-                    <div onClick={e => e.stopPropagation()} className="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative">
-                        <h2 className="text-xl font-semibold text-slate-900 mb-4 text-center">
-                            Order Details
-                        </h2>
+                <div onClick={closeModal} className="fixed inset-0 flex items-center justify-center bg-[var(--te-dark)]/80 backdrop-blur-sm z-50 p-4">
+                    <div onClick={e => e.stopPropagation()} className="bg-[var(--te-white)] rounded-sm border border-[var(--te-grey-200)] max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+                        <button onClick={closeModal} className="absolute top-4 right-4 text-[var(--te-grey-400)] hover:text-[var(--te-orange)] transition-colors">
+                            <XIcon size={20} />
+                        </button>
+                        
+                        <div className="mb-6">
+                            <h2 className="text-lg font-bold text-[var(--te-dark)] uppercase tracking-widest">Order Details</h2>
+                            <div className="w-12 h-[2px] bg-[var(--te-orange)] mt-2" />
+                        </div>
 
                         {/* Customer Details */}
-                        <div className="mb-4">
-                            <h3 className="font-semibold mb-2">Customer Details</h3>
-                            <p><span className="text-green-700">Name:</span> {selectedOrder.user?.name}</p>
-                            <p><span className="text-green-700">Email:</span> {selectedOrder.user?.email}</p>
-                            <p><span className="text-green-700">Phone:</span> {selectedOrder.address?.phone}</p>
-                            <p><span className="text-green-700">Address:</span> {`${selectedOrder.address?.street}, ${selectedOrder.address?.city}, ${selectedOrder.address?.state}, ${selectedOrder.address?.zip}, ${selectedOrder.address?.country}`}</p>
+                        <div className="mb-6 bg-[var(--te-cream)] border border-[var(--te-grey-200)] rounded-sm p-4">
+                            <span className="text-[10px] font-semibold text-[var(--te-grey-400)] tracking-[0.2em] uppercase block mb-3">Customer Info</span>
+                            <div className="space-y-1 text-sm">
+                                <p className="text-[var(--te-dark)] font-medium">{selectedOrder.user?.name}</p>
+                                <p className="text-[var(--te-grey-400)]">{selectedOrder.user?.email}</p>
+                                <p className="text-[var(--te-grey-400)] font-[family-name:var(--font-jetbrains)]">{selectedOrder.address?.phone}</p>
+                                <p className="text-[var(--te-grey-400)]">{`${selectedOrder.address?.street}, ${selectedOrder.address?.city}, ${selectedOrder.address?.state}, ${selectedOrder.address?.zip}`}</p>
+                            </div>
                         </div>
 
                         {/* Products */}
-                        <div className="mb-4">
-                            <h3 className="font-semibold mb-2">Products</h3>
-                            <div className="space-y-2">
+                        <div className="mb-6">
+                            <span className="text-[10px] font-semibold text-[var(--te-grey-400)] tracking-[0.2em] uppercase block mb-3">Products</span>
+                            <div className="space-y-3">
                                 {selectedOrder.orderItems.map((item, i) => (
-                                    <div key={i} className="flex items-center gap-4 border border-slate-100 shadow rounded p-2">
-                                        <img
-                                            src={item.product.images?.[0].src || item.product.images?.[0]}
-                                            alt={item.product?.name}
-                                            className="w-16 h-16 object-cover rounded"
-                                        />
+                                    <div key={i} className="flex items-center gap-4 bg-[var(--te-cream)] border border-[var(--te-grey-200)] rounded-sm p-3">
+                                        <div className="w-16 h-16 bg-[var(--te-white)] border border-[var(--te-grey-200)] rounded-sm flex items-center justify-center">
+                                            <img
+                                                src={item.product.images?.[0].src || item.product.images?.[0]}
+                                                alt={item.product?.name}
+                                                className="max-w-12 max-h-12 object-contain"
+                                            />
+                                        </div>
                                         <div className="flex-1">
-                                            <p className="text-slate-800">{item.product?.name}</p>
-                                            <p>Qty: {item.quantity}</p>
-                                            <p>Price: ${item.price}</p>
+                                            <p className="font-semibold text-[var(--te-dark)] uppercase tracking-wide text-sm">{item.product?.name}</p>
+                                            <p className="text-xs text-[var(--te-grey-400)] mt-1">Qty: <span className="font-bold font-[family-name:var(--font-jetbrains)]">{item.quantity}</span></p>
+                                            <p className="text-sm font-bold text-[var(--te-dark)] font-[family-name:var(--font-jetbrains)] mt-1">{currency}{item.price}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -135,25 +161,28 @@ export default function StoreOrders() {
                         </div>
 
                         {/* Payment & Status */}
-                        <div className="mb-4">
-                            <p><span className="text-green-700">Payment Method:</span> {selectedOrder.paymentMethod}</p>
-                            <p><span className="text-green-700">Paid:</span> {selectedOrder.isPaid ? "Yes" : "No"}</p>
-                            {selectedOrder.isCouponUsed && (
-                                <p><span className="text-green-700">Coupon:</span> {selectedOrder.coupon.code} ({selectedOrder.coupon.discount}% off)</p>
-                            )}
-                            <p><span className="text-green-700">Status:</span> {selectedOrder.status}</p>
-                            <p><span className="text-green-700">Order Date:</span> {new Date(selectedOrder.createdAt).toLocaleString()}</p>
+                        <div className="grid grid-cols-2 gap-4 text-sm mb-6">
+                            <div className="bg-[var(--te-cream)] border border-[var(--te-grey-200)] rounded-sm p-3">
+                                <span className="text-[10px] text-[var(--te-grey-400)] tracking-widest uppercase">Payment</span>
+                                <p className="font-semibold text-[var(--te-dark)] mt-1">{selectedOrder.paymentMethod}</p>
+                            </div>
+                            <div className="bg-[var(--te-cream)] border border-[var(--te-grey-200)] rounded-sm p-3">
+                                <span className="text-[10px] text-[var(--te-grey-400)] tracking-widest uppercase">Status</span>
+                                <p className="font-semibold text-[var(--te-dark)] mt-1">{selectedOrder.status}</p>
+                            </div>
                         </div>
 
                         {/* Actions */}
-                        <div className="flex justify-end">
-                            <button onClick={closeModal} className="px-4 py-2 bg-slate-200 rounded hover:bg-slate-300" >
-                                Close
-                            </button>
-                        </div>
+                        <button 
+                            onClick={closeModal} 
+                            className="w-full bg-[var(--te-dark)] text-white py-3 rounded-sm text-xs font-bold tracking-widest uppercase hover:bg-[var(--te-grey-500)] active:scale-[0.98] transition-all"
+                            style={{ boxShadow: '0 3px 0 rgba(0,0,0,0.3)' }}
+                        >
+                            Close
+                        </button>
                     </div>
                 </div>
             )}
-        </>
+        </div>
     )
 }

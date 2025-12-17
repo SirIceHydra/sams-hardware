@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 
 const OrderSummary = ({ totalPrice, items }) => {
 
-    const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$';
+    const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || 'R';
 
     const router = useRouter();
 
@@ -31,30 +31,35 @@ const OrderSummary = ({ totalPrice, items }) => {
     }
 
     return (
-        <div className='w-full max-w-lg lg:max-w-[340px] bg-slate-50/30 border border-slate-200 text-slate-500 text-sm rounded-xl p-7'>
-            <h2 className='text-xl font-medium text-slate-600'>Payment Summary</h2>
-            <p className='text-slate-400 text-xs my-4'>Payment Method</p>
+        <div className='w-full max-w-lg lg:max-w-[340px] bg-[var(--te-cream)] border border-[var(--te-grey-200)] text-[var(--te-grey-400)] text-xs rounded-sm p-6'>
+            {/* Header */}
+            <h2 className='text-sm font-bold text-[var(--te-dark)] uppercase tracking-widest'>Payment Summary</h2>
+            
+            {/* Payment Method */}
+            <p className='text-[var(--te-grey-400)] text-[10px] my-4 uppercase tracking-widest font-semibold'>Payment Method</p>
             <div className='flex gap-2 items-center'>
-                <input type="radio" id="COD" onChange={() => setPaymentMethod('COD')} checked={paymentMethod === 'COD'} className='accent-gray-500' />
-                <label htmlFor="COD" className='cursor-pointer'>COD</label>
+                <input type="radio" id="COD" onChange={() => setPaymentMethod('COD')} checked={paymentMethod === 'COD'} className='accent-[var(--te-yellow)] w-3 h-3' />
+                <label htmlFor="COD" className='cursor-pointer text-[var(--te-dark)] font-medium tracking-wide'>COD</label>
             </div>
-            <div className='flex gap-2 items-center mt-1'>
-                <input type="radio" id="STRIPE" name='payment' onChange={() => setPaymentMethod('STRIPE')} checked={paymentMethod === 'STRIPE'} className='accent-gray-500' />
-                <label htmlFor="STRIPE" className='cursor-pointer'>Stripe Payment</label>
+            <div className='flex gap-2 items-center mt-2'>
+                <input type="radio" id="STRIPE" name='payment' onChange={() => setPaymentMethod('STRIPE')} checked={paymentMethod === 'STRIPE'} className='accent-[var(--te-yellow)] w-3 h-3' />
+                <label htmlFor="STRIPE" className='cursor-pointer text-[var(--te-dark)] font-medium tracking-wide'>Stripe Payment</label>
             </div>
-            <div className='my-4 py-4 border-y border-slate-200 text-slate-400'>
-                <p>Address</p>
+            
+            {/* Address Section */}
+            <div className='my-4 py-4 border-y border-[var(--te-grey-200)]'>
+                <p className='text-[10px] uppercase tracking-widest font-semibold mb-2'>Address</p>
                 {
                     selectedAddress ? (
-                        <div className='flex gap-2 items-center'>
+                        <div className='flex gap-2 items-center text-[var(--te-dark)] font-medium'>
                             <p>{selectedAddress.name}, {selectedAddress.city}, {selectedAddress.state}, {selectedAddress.zip}</p>
-                            <SquarePenIcon onClick={() => setSelectedAddress(null)} className='cursor-pointer' size={18} />
+                            <SquarePenIcon onClick={() => setSelectedAddress(null)} className='cursor-pointer text-[var(--te-yellow)] hover:text-[var(--te-dark)] transition-colors' size={14} />
                         </div>
                     ) : (
                         <div>
                             {
                                 addressList.length > 0 && (
-                                    <select className='border border-slate-400 p-2 w-full my-3 outline-none rounded' onChange={(e) => setSelectedAddress(addressList[e.target.value])} >
+                                    <select className='border border-[var(--te-grey-200)] bg-[var(--te-white)] p-2 w-full my-2 outline-none rounded-sm text-[var(--te-dark)] font-medium' onChange={(e) => setSelectedAddress(addressList[e.target.value])} >
                                         <option value="">Select Address</option>
                                         {
                                             addressList.map((address, index) => (
@@ -64,44 +69,71 @@ const OrderSummary = ({ totalPrice, items }) => {
                                     </select>
                                 )
                             }
-                            <button className='flex items-center gap-1 text-slate-600 mt-1' onClick={() => setShowAddressModal(true)} >Add Address <PlusIcon size={18} /></button>
+                            <button className='flex items-center gap-1 text-[var(--te-yellow)] hover:text-[var(--te-dark)] mt-2 font-semibold tracking-wide transition-colors' onClick={() => setShowAddressModal(true)} >
+                                Add Address <PlusIcon size={14} />
+                            </button>
                         </div>
                     )
                 }
             </div>
-            <div className='pb-4 border-b border-slate-200'>
+            
+            {/* Pricing */}
+            <div className='pb-4 border-b border-[var(--te-grey-200)]'>
                 <div className='flex justify-between'>
-                    <div className='flex flex-col gap-1 text-slate-400'>
-                        <p>Subtotal:</p>
-                        <p>Shipping:</p>
-                        {coupon && <p>Coupon:</p>}
+                    <div className='flex flex-col gap-1.5'>
+                        <p className='text-[10px] uppercase tracking-widest font-semibold'>Subtotal:</p>
+                        <p className='text-[10px] uppercase tracking-widest font-semibold'>Shipping:</p>
+                        {coupon && <p className='text-[10px] uppercase tracking-widest font-semibold'>Coupon:</p>}
                     </div>
-                    <div className='flex flex-col gap-1 font-medium text-right'>
+                    <div className='flex flex-col gap-1.5 font-bold text-[var(--te-dark)] text-right font-[family-name:var(--font-jetbrains)]'>
                         <p>{currency}{totalPrice.toLocaleString()}</p>
-                        <p>Free</p>
-                        {coupon && <p>{`-${currency}${(coupon.discount / 100 * totalPrice).toFixed(2)}`}</p>}
+                        <p className='text-[var(--te-green)]'>Free</p>
+                        {coupon && <p className='text-[var(--te-yellow)]'>{`-${currency}${(coupon.discount / 100 * totalPrice).toFixed(2)}`}</p>}
                     </div>
                 </div>
                 {
                     !coupon ? (
-                        <form onSubmit={e => toast.promise(handleCouponCode(e), { loading: 'Checking Coupon...' })} className='flex justify-center gap-3 mt-3'>
-                            <input onChange={(e) => setCouponCodeInput(e.target.value)} value={couponCodeInput} type="text" placeholder='Coupon Code' className='border border-slate-400 p-1.5 rounded w-full outline-none' />
-                            <button className='bg-slate-600 text-white px-3 rounded hover:bg-slate-800 active:scale-95 transition-all'>Apply</button>
+                        <form onSubmit={e => toast.promise(handleCouponCode(e), { loading: 'Checking Coupon...' })} className='flex justify-center gap-2 mt-4'>
+                            <input 
+                                onChange={(e) => setCouponCodeInput(e.target.value)} 
+                                value={couponCodeInput} 
+                                type="text" 
+                                placeholder='COUPON CODE' 
+                                className='border border-[var(--te-grey-200)] bg-[var(--te-white)] p-2 rounded-sm w-full outline-none text-[var(--te-dark)] placeholder-[var(--te-grey-300)] font-medium tracking-wide focus:border-[var(--te-yellow)]' 
+                            />
+                            <button 
+                                className='bg-[var(--te-dark)] text-white px-4 rounded-sm hover:bg-[var(--te-grey-500)] active:scale-95 transition-all font-semibold tracking-wider uppercase text-[10px]'
+                                style={{ boxShadow: '0 2px 0 rgba(0,0,0,0.3)' }}
+                            >
+                                Apply
+                            </button>
                         </form>
                     ) : (
-                        <div className='w-full flex items-center justify-center gap-2 text-xs mt-2'>
-                            <p>Code: <span className='font-semibold ml-1'>{coupon.code.toUpperCase()}</span></p>
-                            <p>{coupon.description}</p>
-                            <XIcon size={18} onClick={() => setCoupon('')} className='hover:text-red-700 transition cursor-pointer' />
+                        <div className='w-full flex items-center justify-center gap-2 text-[10px] mt-3 bg-[var(--te-white)] p-2 rounded-sm border border-[var(--te-grey-200)]'>
+                            <p className='text-[var(--te-dark)]'>Code: <span className='font-bold font-[family-name:var(--font-jetbrains)]'>{coupon.code.toUpperCase()}</span></p>
+                            <p className='text-[var(--te-grey-400)]'>{coupon.description}</p>
+                            <XIcon size={14} onClick={() => setCoupon('')} className='hover:text-[var(--te-yellow)] transition cursor-pointer text-[var(--te-grey-400)]' />
                         </div>
                     )
                 }
             </div>
+            
+            {/* Total */}
             <div className='flex justify-between py-4'>
-                <p>Total:</p>
-                <p className='font-medium text-right'>{currency}{coupon ? (totalPrice - (coupon.discount / 100 * totalPrice)).toFixed(2) : totalPrice.toLocaleString()}</p>
+                <p className='text-[10px] uppercase tracking-widest font-semibold'>Total:</p>
+                <p className='font-bold text-[var(--te-dark)] text-lg font-[family-name:var(--font-jetbrains)]'>
+                    {currency}{coupon ? (totalPrice - (coupon.discount / 100 * totalPrice)).toFixed(2) : totalPrice.toLocaleString()}
+                </p>
             </div>
-            <button onClick={e => toast.promise(handlePlaceOrder(e), { loading: 'placing Order...' })} className='w-full bg-slate-700 text-white py-2.5 rounded hover:bg-slate-900 active:scale-95 transition-all'>Place Order</button>
+            
+            {/* Place Order Button */}
+            <button 
+                onClick={e => toast.promise(handlePlaceOrder(e), { loading: 'Placing Order...' })} 
+                className='w-full bg-[var(--te-yellow)] text-[var(--te-dark)] py-3.5 hover:bg-[var(--te-yellow-light)] active:scale-[0.98] transition-all font-bold tracking-widest uppercase text-xs'
+                style={{ boxShadow: '0 4px 0 var(--te-yellow-dark), 0 8px 20px rgba(248, 204, 40, 0.3)' }}
+            >
+                Place Order
+            </button>
 
             {showAddressModal && <AddressModal setShowAddressModal={setShowAddressModal} />}
 

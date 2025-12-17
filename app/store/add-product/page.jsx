@@ -31,50 +31,126 @@ export default function StoreAddProduct() {
 
 
     return (
-        <form onSubmit={e => toast.promise(onSubmitHandler(e), { loading: "Adding Product..." })} className="text-slate-500 mb-28">
-            <h1 className="text-2xl">Add New <span className="text-slate-800 font-medium">Products</span></h1>
-            <p className="mt-7">Product Images</p>
+        <form onSubmit={e => toast.promise(onSubmitHandler(e), { loading: "Adding Product..." })} className="text-[var(--te-grey-400)] mb-28 max-w-2xl">
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-8">
+                <div className="w-2 h-2 rounded-full bg-[var(--te-orange)]" style={{ boxShadow: '0 0 8px var(--te-orange)' }} />
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--te-dark)] uppercase tracking-tight">Add Product</h1>
+            </div>
 
-            <div htmlFor="" className="flex gap-3 mt-4">
-                {Object.keys(images).map((key) => (
-                    <label key={key} htmlFor={`images${key}`}>
-                        <Image width={300} height={300} className='h-15 w-auto border border-slate-200 rounded cursor-pointer' src={images[key] ? URL.createObjectURL(images[key]) : assets.upload_area} alt="" />
-                        <input type="file" accept='image/*' id={`images${key}`} onChange={e => setImages({ ...images, [key]: e.target.files[0] })} hidden />
+            {/* Images Section */}
+            <div className="bg-[var(--te-cream)] border border-[var(--te-grey-200)] rounded-sm p-5 mb-6">
+                <span className="text-[10px] font-semibold text-[var(--te-grey-400)] tracking-[0.2em] uppercase block mb-4">Product Images</span>
+                <div className="flex gap-3 flex-wrap">
+                    {Object.keys(images).map((key) => (
+                        <label key={key} htmlFor={`images${key}`} className="cursor-pointer">
+                            <div className="w-20 h-20 bg-[var(--te-white)] border-2 border-dashed border-[var(--te-grey-200)] rounded-sm flex items-center justify-center hover:border-[var(--te-orange)] transition-colors overflow-hidden">
+                                {images[key] ? (
+                                    <Image width={80} height={80} className='w-full h-full object-cover' src={URL.createObjectURL(images[key])} alt="" />
+                                ) : (
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--te-grey-300)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"/>
+                                        <line x1="16" y1="5" x2="22" y2="5"/>
+                                        <line x1="19" y1="2" x2="19" y2="8"/>
+                                        <circle cx="9" cy="9" r="2"/>
+                                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                                    </svg>
+                                )}
+                            </div>
+                            <input type="file" accept='image/*' id={`images${key}`} onChange={e => setImages({ ...images, [key]: e.target.files[0] })} hidden />
+                        </label>
+                    ))}
+                </div>
+            </div>
+
+            {/* Product Info */}
+            <div className="space-y-5">
+                <div>
+                    <label className="block text-[10px] font-semibold text-[var(--te-grey-400)] tracking-[0.2em] uppercase mb-2">
+                        Product Name
                     </label>
-                ))}
+                    <input 
+                        type="text" 
+                        name="name" 
+                        onChange={onChangeHandler} 
+                        value={productInfo.name} 
+                        placeholder="Enter product name" 
+                        className="w-full px-4 py-2.5 border border-[var(--te-grey-200)] rounded-sm focus:outline-none focus:border-[var(--te-orange)] text-[var(--te-dark)] placeholder-[var(--te-grey-300)] bg-[var(--te-white)] font-medium text-sm tracking-wide transition-colors" 
+                        required 
+                    />
+                </div>
+
+                <div>
+                    <label className="block text-[10px] font-semibold text-[var(--te-grey-400)] tracking-[0.2em] uppercase mb-2">
+                        Description
+                    </label>
+                    <textarea 
+                        name="description" 
+                        onChange={onChangeHandler} 
+                        value={productInfo.description} 
+                        placeholder="Enter product description" 
+                        rows={4} 
+                        className="w-full px-4 py-2.5 border border-[var(--te-grey-200)] rounded-sm focus:outline-none focus:border-[var(--te-orange)] text-[var(--te-dark)] placeholder-[var(--te-grey-300)] bg-[var(--te-white)] font-medium text-sm tracking-wide transition-colors resize-none" 
+                        required 
+                    />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-[10px] font-semibold text-[var(--te-grey-400)] tracking-[0.2em] uppercase mb-2">
+                            Actual Price
+                        </label>
+                        <input 
+                            type="number" 
+                            name="mrp" 
+                            onChange={onChangeHandler} 
+                            value={productInfo.mrp} 
+                            placeholder="0" 
+                            className="w-full px-4 py-2.5 border border-[var(--te-grey-200)] rounded-sm focus:outline-none focus:border-[var(--te-orange)] text-[var(--te-dark)] placeholder-[var(--te-grey-300)] bg-[var(--te-white)] font-medium text-sm tracking-wide transition-colors font-[family-name:var(--font-jetbrains)]" 
+                            required 
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-semibold text-[var(--te-grey-400)] tracking-[0.2em] uppercase mb-2">
+                            Offer Price
+                        </label>
+                        <input 
+                            type="number" 
+                            name="price" 
+                            onChange={onChangeHandler} 
+                            value={productInfo.price} 
+                            placeholder="0" 
+                            className="w-full px-4 py-2.5 border border-[var(--te-grey-200)] rounded-sm focus:outline-none focus:border-[var(--te-orange)] text-[var(--te-dark)] placeholder-[var(--te-grey-300)] bg-[var(--te-white)] font-medium text-sm tracking-wide transition-colors font-[family-name:var(--font-jetbrains)]" 
+                            required 
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-[10px] font-semibold text-[var(--te-grey-400)] tracking-[0.2em] uppercase mb-2">
+                        Category
+                    </label>
+                    <select 
+                        onChange={e => setProductInfo({ ...productInfo, category: e.target.value })} 
+                        value={productInfo.category} 
+                        className="w-full px-4 py-2.5 border border-[var(--te-grey-200)] rounded-sm focus:outline-none focus:border-[var(--te-orange)] text-[var(--te-dark)] bg-[var(--te-white)] font-medium text-sm tracking-wide transition-colors" 
+                        required
+                    >
+                        <option value="" className="text-[var(--te-grey-300)]">Select a category</option>
+                        {categories.map((category) => (
+                            <option key={category} value={category}>{category}</option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
-            <label htmlFor="" className="flex flex-col gap-2 my-6 ">
-                Name
-                <input type="text" name="name" onChange={onChangeHandler} value={productInfo.name} placeholder="Enter product name" className="w-full max-w-sm p-2 px-4 outline-none border border-slate-200 rounded" required />
-            </label>
-
-            <label htmlFor="" className="flex flex-col gap-2 my-6 ">
-                Description
-                <textarea name="description" onChange={onChangeHandler} value={productInfo.description} placeholder="Enter product description" rows={5} className="w-full max-w-sm p-2 px-4 outline-none border border-slate-200 rounded resize-none" required />
-            </label>
-
-            <div className="flex gap-5">
-                <label htmlFor="" className="flex flex-col gap-2 ">
-                    Actual Price ($)
-                    <input type="number" name="mrp" onChange={onChangeHandler} value={productInfo.mrp} placeholder="0" rows={5} className="w-full max-w-45 p-2 px-4 outline-none border border-slate-200 rounded resize-none" required />
-                </label>
-                <label htmlFor="" className="flex flex-col gap-2 ">
-                    Offer Price ($)
-                    <input type="number" name="price" onChange={onChangeHandler} value={productInfo.price} placeholder="0" rows={5} className="w-full max-w-45 p-2 px-4 outline-none border border-slate-200 rounded resize-none" required />
-                </label>
-            </div>
-
-            <select onChange={e => setProductInfo({ ...productInfo, category: e.target.value })} value={productInfo.category} className="w-full max-w-sm p-2 px-4 my-6 outline-none border border-slate-200 rounded" required>
-                <option value="">Select a category</option>
-                {categories.map((category) => (
-                    <option key={category} value={category}>{category}</option>
-                ))}
-            </select>
-
-            <br />
-
-            <button disabled={loading} className="bg-slate-800 text-white px-6 mt-7 py-2 hover:bg-slate-900 rounded transition">Add Product</button>
+            <button 
+                disabled={loading} 
+                className="w-full bg-[var(--te-orange)] text-white py-3 rounded-sm text-xs font-bold tracking-widest uppercase hover:bg-[var(--te-dark)] active:scale-[0.98] transition-all mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ boxShadow: '0 3px 0 rgba(200, 60, 0, 0.4)' }}
+            >
+                Add Product
+            </button>
         </form>
     )
 }

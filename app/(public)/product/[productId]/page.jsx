@@ -4,6 +4,7 @@ import ProductDetails from "@/components/ProductDetails";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import Link from "next/link";
 
 export default function Product() {
 
@@ -21,15 +22,19 @@ export default function Product() {
             fetchProduct()
         }
         scrollTo(0, 0)
-    }, [productId,products]);
+    }, [productId, products]);
 
     return (
-        <div className="mx-6">
+        <div className="mx-4 sm:mx-6">
             <div className="max-w-7xl mx-auto">
 
-                {/* Breadcrums */}
-                <div className="  text-gray-600 text-sm mt-8 mb-5">
-                    Home / Products / {product?.category}
+                {/* Breadcrumbs */}
+                <div className="flex items-center gap-2 text-[10px] font-medium tracking-widest uppercase mt-6 mb-5 text-[var(--te-grey-400)]">
+                    <Link href="/" className="hover:text-[var(--te-orange)] transition-colors">Home</Link>
+                    <span>/</span>
+                    <Link href="/shop" className="hover:text-[var(--te-orange)] transition-colors">Products</Link>
+                    <span>/</span>
+                    <span className="text-[var(--te-dark)]">{product?.category}</span>
                 </div>
 
                 {/* Product Details */}

@@ -7,7 +7,7 @@ import { productDummyData } from "@/assets/assets"
 
 export default function StoreManageProducts() {
 
-    const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$'
+    const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || 'R'
 
     const [loading, setLoading] = useState(true)
     const [products, setProducts] = useState([])
@@ -30,41 +30,50 @@ export default function StoreManageProducts() {
     if (loading) return <Loading />
 
     return (
-        <>
-            <h1 className="text-2xl text-slate-500 mb-5">Manage <span className="text-slate-800 font-medium">Products</span></h1>
-            <table className="w-full max-w-4xl text-left  ring ring-slate-200  rounded overflow-hidden text-sm">
-                <thead className="bg-slate-50 text-gray-700 uppercase tracking-wider">
-                    <tr>
-                        <th className="px-4 py-3">Name</th>
-                        <th className="px-4 py-3 hidden md:table-cell">Description</th>
-                        <th className="px-4 py-3 hidden md:table-cell">MRP</th>
-                        <th className="px-4 py-3">Price</th>
-                        <th className="px-4 py-3">Actions</th>
-                    </tr>
-                </thead>
-                <tbody className="text-slate-700">
-                    {products.map((product) => (
-                        <tr key={product.id} className="border-t border-gray-200 hover:bg-gray-50">
-                            <td className="px-4 py-3">
-                                <div className="flex gap-2 items-center">
-                                    <Image width={40} height={40} className='p-1 shadow rounded cursor-pointer' src={product.images[0]} alt="" />
-                                    {product.name}
-                                </div>
-                            </td>
-                            <td className="px-4 py-3 max-w-md text-slate-600 hidden md:table-cell truncate">{product.description}</td>
-                            <td className="px-4 py-3 hidden md:table-cell">{currency} {product.mrp.toLocaleString()}</td>
-                            <td className="px-4 py-3">{currency} {product.price.toLocaleString()}</td>
-                            <td className="px-4 py-3 text-center">
-                                <label className="relative inline-flex items-center cursor-pointer text-gray-900 gap-3">
-                                    <input type="checkbox" className="sr-only peer" onChange={() => toast.promise(toggleStock(product.id), { loading: "Updating data..." })} checked={product.inStock} />
-                                    <div className="w-9 h-5 bg-slate-300 rounded-full peer peer-checked:bg-green-600 transition-colors duration-200"></div>
-                                    <span className="dot absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-transform duration-200 ease-in-out peer-checked:translate-x-4"></span>
-                                </label>
-                            </td>
+        <div className="text-[var(--te-grey-400)] mb-28">
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-8">
+                <div className="w-2 h-2 rounded-full bg-[var(--te-cyan)]" style={{ boxShadow: '0 0 8px var(--te-cyan)' }} />
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--te-dark)] uppercase tracking-tight">Manage Products</h1>
+            </div>
+            
+            <div className="overflow-x-auto bg-[var(--te-cream)] border border-[var(--te-grey-200)] rounded-sm">
+                <table className="w-full text-left text-sm">
+                    <thead className="bg-[var(--te-white)] border-b border-[var(--te-grey-200)]">
+                        <tr>
+                            <th className="px-4 py-3 text-[10px] font-semibold text-[var(--te-grey-400)] tracking-[0.15em] uppercase">Name</th>
+                            <th className="px-4 py-3 hidden md:table-cell text-[10px] font-semibold text-[var(--te-grey-400)] tracking-[0.15em] uppercase">Description</th>
+                            <th className="px-4 py-3 hidden md:table-cell text-[10px] font-semibold text-[var(--te-grey-400)] tracking-[0.15em] uppercase">MRP</th>
+                            <th className="px-4 py-3 text-[10px] font-semibold text-[var(--te-grey-400)] tracking-[0.15em] uppercase">Price</th>
+                            <th className="px-4 py-3 text-[10px] font-semibold text-[var(--te-grey-400)] tracking-[0.15em] uppercase text-center">In Stock</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
-        </>
+                    </thead>
+                    <tbody className="text-[var(--te-dark)]">
+                        {products.map((product) => (
+                            <tr key={product.id} className="border-b border-[var(--te-grey-200)] last:border-0 hover:bg-[var(--te-white)] transition-colors">
+                                <td className="px-4 py-4">
+                                    <div className="flex gap-3 items-center">
+                                        <div className="w-12 h-12 bg-[var(--te-white)] border border-[var(--te-grey-200)] rounded-sm flex items-center justify-center">
+                                            <Image width={40} height={40} className='max-h-10 w-auto' src={product.images[0]} alt="" />
+                                        </div>
+                                        <span className="font-semibold text-sm tracking-wide uppercase">{product.name}</span>
+                                    </div>
+                                </td>
+                                <td className="px-4 py-4 max-w-xs text-[var(--te-grey-400)] hidden md:table-cell truncate text-xs font-medium">{product.description}</td>
+                                <td className="px-4 py-4 hidden md:table-cell font-[family-name:var(--font-jetbrains)] text-[var(--te-grey-400)]">{currency}{product.mrp.toLocaleString()}</td>
+                                <td className="px-4 py-4 font-bold font-[family-name:var(--font-jetbrains)]">{currency}{product.price.toLocaleString()}</td>
+                                <td className="px-4 py-4 text-center">
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" className="sr-only peer" onChange={() => toast.promise(toggleStock(product.id), { loading: "Updating..." })} checked={product.inStock} />
+                                        <div className="w-9 h-5 bg-[var(--te-grey-200)] rounded-sm peer peer-checked:bg-[var(--te-green)] transition-colors duration-150"></div>
+                                        <span className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-sm transition-transform duration-150 ease-out peer-checked:translate-x-4" style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }}></span>
+                                    </label>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     )
 }

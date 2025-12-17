@@ -7,7 +7,7 @@ import { useEffect, useState } from "react"
 
 export default function AdminDashboard() {
 
-    const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$'
+    const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || 'R'
 
     const [loading, setLoading] = useState(true)
     const [dashboardData, setDashboardData] = useState({
@@ -19,11 +19,21 @@ export default function AdminDashboard() {
     })
 
     const dashboardCardsData = [
-        { title: 'Total Products', value: dashboardData.products, icon: ShoppingBasketIcon },
-        { title: 'Total Revenue', value: currency + dashboardData.revenue, icon: CircleDollarSignIcon },
-        { title: 'Total Orders', value: dashboardData.orders, icon: TagsIcon },
-        { title: 'Total Stores', value: dashboardData.stores, icon: StoreIcon },
+        { title: 'Total Products', value: dashboardData.products, icon: ShoppingBasketIcon, color: 'orange' },
+        { title: 'Total Revenue', value: currency + dashboardData.revenue, icon: CircleDollarSignIcon, color: 'green' },
+        { title: 'Total Orders', value: dashboardData.orders, icon: TagsIcon, color: 'cyan' },
+        { title: 'Total Stores', value: dashboardData.stores, icon: StoreIcon, color: 'yellow' },
     ]
+
+    const getIconColor = (color) => {
+        switch(color) {
+            case 'orange': return 'var(--te-orange)';
+            case 'green': return 'var(--te-green)';
+            case 'cyan': return 'var(--te-cyan)';
+            case 'yellow': return 'var(--te-yellow)';
+            default: return 'var(--te-grey-400)';
+        }
+    }
 
     const fetchDashboardData = async () => {
         setDashboardData(dummyAdminDashboardData)
@@ -37,26 +47,50 @@ export default function AdminDashboard() {
     if (loading) return <Loading />
 
     return (
-        <div className="text-slate-500">
-            <h1 className="text-2xl">Admin <span className="text-slate-800 font-medium">Dashboard</span></h1>
+        <div className="text-[var(--te-grey-400)]">
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-8">
+                <div className="w-2 h-2 rounded-full bg-[var(--te-orange)]" style={{ boxShadow: '0 0 8px var(--te-orange)' }} />
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--te-dark)] uppercase tracking-tight">Dashboard</h1>
+            </div>
 
-            {/* Cards */}
-            <div className="flex flex-wrap gap-5 my-10 mt-4">
+            {/* Stat Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
                 {
                     dashboardCardsData.map((card, index) => (
-                        <div key={index} className="flex items-center gap-10 border border-slate-200 p-3 px-6 rounded-lg">
-                            <div className="flex flex-col gap-3 text-xs">
-                                <p>{card.title}</p>
-                                <b className="text-2xl font-medium text-slate-700">{card.value}</b>
+                        <div 
+                            key={index} 
+                            className="relative bg-[var(--te-cream)] border border-[var(--te-grey-200)] rounded-sm p-5 hover:border-[var(--te-orange)] transition-colors"
+                        >
+                            {/* Top accent */}
+                            <div 
+                                className="absolute top-0 left-0 right-0 h-[2px] rounded-t-sm"
+                                style={{ backgroundColor: getIconColor(card.color) }}
+                            />
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-[10px] font-semibold text-[var(--te-grey-400)] tracking-[0.15em] uppercase mb-2">{card.title}</p>
+                                    <p className="text-2xl font-bold text-[var(--te-dark)] font-[family-name:var(--font-jetbrains)]">{card.value}</p>
+                                </div>
+                                <div 
+                                    className="w-12 h-12 rounded-sm bg-[var(--te-white)] border border-[var(--te-grey-200)] flex items-center justify-center"
+                                >
+                                    <card.icon size={20} style={{ color: getIconColor(card.color) }} />
+                                </div>
                             </div>
-                            <card.icon size={50} className=" w-11 h-11 p-2.5 text-slate-400 bg-slate-100 rounded-full" />
                         </div>
                     ))
                 }
             </div>
 
             {/* Area Chart */}
-            <OrdersAreaChart allOrders={dashboardData.allOrders} />
+            <div className="bg-[var(--te-cream)] border border-[var(--te-grey-200)] rounded-sm p-6">
+                <div className="flex items-center gap-2 mb-6">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--te-cyan)]" style={{ boxShadow: '0 0 6px var(--te-cyan)' }} />
+                    <span className="text-[10px] font-semibold text-[var(--te-grey-400)] tracking-[0.2em] uppercase">Orders Overview</span>
+                </div>
+                <OrdersAreaChart allOrders={dashboardData.allOrders} />
+            </div>
         </div>
     )
 }

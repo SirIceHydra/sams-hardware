@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+:root {
+    --brand-yellow: #FACC15;
+    --brand-amber: #F59E0B;
+    --brand-dark: #1e293b;
+    --header-height: 80px;
+}
+
+@layer components {
+    @keyframes marqueeScroll {
+        0% {
+            transform: translateX(0%);
+        }
+
+        100% {
+            transform: translateX(-50%);
+        }
+    }
+}
+
+@layer base {
+    button {
+        cursor: pointer;
+    }
+
+    body {
+        background-color: #f8fafc;
+        min-height: 100vh;
+        font-weight: 500;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-weight: 700;
+        letter-spacing: -0.02em;
+    }
+
+    h1 {
+        font-size: 3rem;
+        line-height: 1.1;
+    }
+
+    h2 {
+        font-size: 2.25rem;
+        line-height: 1.2;
+    }
+
+    h3 {
+        font-size: 1.5rem;
+        line-height: 1.3;
+    }
+
+    p {
+        font-size: 1.05rem;
+        line-height: 1.7;
+    }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+@layer utilities {
+    .hover-glow-yellow:hover {
+        color: var(--brand-yellow);
+        text-shadow: 0 0 8px rgba(250, 204, 21, 0.6), 0 0 16px rgba(250, 204, 21, 0.3);
+        filter: drop-shadow(0 0 4px rgba(250, 204, 21, 0.5));
+    }
+
+    .text-balance {
+        text-wrap: balance;
+    }
+}
