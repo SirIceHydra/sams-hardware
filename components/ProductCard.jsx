@@ -3,7 +3,10 @@ import Image from 'next/image'
 import Link from 'next/link'
 import React, { useRef } from 'react'
 import gsap from 'gsap'
-import { Eye, ShoppingCart, Zap } from 'lucide-react'
+import { Eye, ShoppingCart, Zap, Settings } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useShop } from '@/shop/core/ShopProvider'
+import toast from 'react-hot-toast'
 
 const ProductCard = ({ product }) => {
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || 'R'
@@ -11,6 +14,9 @@ const ProductCard = ({ product }) => {
     const imageRef = useRef(null)
     const overlayRef = useRef(null)
     const actionsRef = useRef(null)
+    const router = useRouter()
+    const { cart } = useShop()
+    const { addItem } = cart
 
     // calculate the average rating of the product
     const rating = product.rating && product.rating.length > 0
@@ -22,7 +28,11 @@ const ProductCard = ({ product }) => {
         ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
         : 0;
 
+    const inStock = product.inStock !== false;
+    const hasVariations = product.type === 'variable' || product.hasVariations || (product.variations && product.variations.length > 0);
+
     const handleMouseEnter = () => {
+        if (window.innerWidth < 768) return // Mobile optimization
         if (!cardRef.current) return
         
         gsap.to(cardRef.current, {
@@ -73,6 +83,20 @@ const ProductCard = ({ product }) => {
             opacity: 0,
             duration: 0.2
         })
+    }
+
+    const handleAction = (e) => {
+        e.preventDefault()
+        
+        if (!inStock) return;
+
+        if (hasVariations) {
+            router.push(`/product/${product.id}`)
+            return
+        }
+
+        addItem(product, 1)
+        toast.success(`Added ${product.name} to cart`)
     }
 
     return (
@@ -130,11 +154,19 @@ const ProductCard = ({ product }) => {
                         className="absolute inset-0 bg-[var(--te-dark)]/80 flex items-center justify-center opacity-0 z-30"
                     >
                         <div ref={actionsRef} className="flex gap-3">
-                            <button className="flex items-center justify-center w-12 h-12 bg-[var(--te-yellow)] text-[var(--te-dark)] hover:bg-[var(--te-yellow-light)] transition-colors">
+                            <button 
+                                onClick={(e) => { e.preventDefault(); router.push(`/product/${product.id}`) }}
+                                className="flex items-center justify-center w-12 h-12 bg-[var(--te-yellow)] text-[var(--te-dark)] hover:bg-[var(--te-yellow-light)] transition-colors"
+                            >
                                 <Eye size={20} />
                             </button>
-                            <button className="flex items-center justify-center w-12 h-12 bg-[var(--te-white)] text-[var(--te-dark)] hover:bg-[var(--te-bone)] transition-colors">
-                                <ShoppingCart size={20} />
+                            <button 
+                                disabled={!inStock}
+                                onClick={handleAction}
+                                className={`flex items-center justify-center w-12 h-12 bg-[var(--te-white)] text-[var(--te-dark)] transition-colors ${inStock ? 'hover:bg-[var(--te-bone)]' : 'opacity-50 cursor-not-allowed'}`}
+                                title={hasVariations ? "Select Options" : "Add to Cart"}
+                            >
+                                {hasVariations ? <Settings size={20} /> : <ShoppingCart size={20} />}
                             </button>
                         </div>
                     </div>
@@ -189,26 +221,25 @@ const ProductCard = ({ product }) => {
                     
                     {/* Price section */}
                     <div className='flex items-end justify-between mt-3 pt-3 border-t border-[var(--te-grey-200)]'>
-                        <div className="flex items-baseline gap-2">
-                            <span className='text-lg sm:text-xl font-black text-[var(--te-dark)] font-[family-name:var(--font-jetbrains)]'>
-                                {currency}{product.price?.toLocaleString()}
-                            </span>
+                        <div className="flex flex-col">
                             {product.mrp && product.mrp > product.price && (
-                                <span className='text-xs text-[var(--te-grey-400)] line-through font-[family-name:var(--font-jetbrains)]'>
+                                <span className='text-xs text-[var(--te-grey-400)] line-through font-[family-name:var(--font-jetbrains)] mb-0.5'>
                                     {currency}{product.mrp?.toLocaleString()}
                                 </span>
                             )}
+                            <span className='text-lg sm:text-xl font-black text-[var(--te-dark)] font-[family-name:var(--font-jetbrains)] leading-none'>
+                                {currency}{product.price?.toLocaleString()}
+                            </span>
                         </div>
                         
                         {/* Quick add button */}
                         <button 
-                            className="flex items-center justify-center w-8 h-8 bg-[var(--te-dark)] text-[var(--te-white)] hover:bg-[var(--te-yellow)] hover:text-[var(--te-dark)] transition-all"
-                            onClick={(e) => {
-                                e.preventDefault()
-                                // Add to cart logic would go here
-                            }}
+                            disabled={!inStock}
+                            className={`flex items-center justify-center w-8 h-8 bg-[var(--te-dark)] text-[var(--te-white)] transition-all ${inStock ? 'hover:bg-[var(--te-yellow)] hover:text-[var(--te-dark)]' : 'opacity-50 cursor-not-allowed'}`}
+                            onClick={handleAction}
+                            title={hasVariations ? "Select Options" : "Add to Cart"}
                         >
-                            <ShoppingCart size={14} />
+                            {hasVariations ? <Settings size={14} /> : <ShoppingCart size={14} />}
                         </button>
                     </div>
                 </div>

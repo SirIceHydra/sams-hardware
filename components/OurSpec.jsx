@@ -15,21 +15,21 @@ const OurSpecs = () => {
     const specs = [
         {
             icon: Truck,
-            title: "Free Shipping",
-            description: "Free delivery on all heavy machinery and bulk orders over R99",
-            highlight: "24-48H"
+            title: "Fast Delivery",
+            description: "Same day delivery available in Norwood. Reliable nationwide shipping to your door in 3-5 days.",
+            highlight: "1-2 DAYS"
         },
         {
             icon: Shield,
             title: "Lifetime Warranty",
-            description: "We stand by our tools. Lifetime warranty on all hand tools",
+            description: "Official distributor warranty. We stand by our quality with a lifetime warranty on all premium hand tools.",
             highlight: "100%"
         },
         {
             icon: Headphones,
-            title: "24/7 Pro Support",
-            description: "Technical support from industry experts around the clock",
-            highlight: "24/7"
+            title: "Expert Advice",
+            description: "Professional technical guidance from our experienced team in Norwood. We help you choose the right tools for the job.",
+            highlight: "PRO"
         }
     ]
 
@@ -37,52 +37,50 @@ const OurSpecs = () => {
     useEffect(() => {
         // Skip scroll animations on mobile - just show content
         const isMobile = window.innerWidth < 768
-        if (isMobile) return
+        if (isMobile || !cardsRef.current) return
         
-        if (!cardsRef.current) return
-        
-        const cards = cardsRef.current.querySelectorAll('.spec-card')
-        
-        gsap.fromTo(cards,
-            { y: 60, opacity: 0, rotateX: -15 },
-            {
-                y: 0, opacity: 1, rotateX: 0,
-                duration: 0.6,
-                stagger: 0.15,
-                ease: 'power3.out',
-                scrollTrigger: {
-                    trigger: cardsRef.current,
-                    start: 'top 85%',
-                    toggleActions: 'play none none reverse'
-                }
-            }
-        )
-        
-        if (statsRef.current) {
-            const statItems = statsRef.current.querySelectorAll('.stat-item')
-            gsap.fromTo(statItems,
-                { y: 30, opacity: 0 },
+        const ctx = gsap.context(() => {
+            const cards = cardsRef.current.querySelectorAll('.spec-card')
+            
+            gsap.fromTo(cards,
+                { y: 60, opacity: 0, rotateX: -15 },
                 {
-                    y: 0, opacity: 1,
-                    duration: 0.5,
-                    stagger: 0.1,
-                    ease: 'power2.out',
+                    y: 0, opacity: 1, rotateX: 0,
+                    duration: 0.6,
+                    stagger: 0.15,
+                    ease: 'power3.out',
                     scrollTrigger: {
-                        trigger: statsRef.current,
-                        start: 'top 90%',
+                        trigger: cardsRef.current,
+                        start: 'top 85%',
                         toggleActions: 'play none none reverse'
                     }
                 }
             )
-        }
+            
+            if (statsRef.current) {
+                const statItems = statsRef.current.querySelectorAll('.stat-item')
+                gsap.fromTo(statItems,
+                    { y: 30, opacity: 0 },
+                    {
+                        y: 0, opacity: 1,
+                        duration: 0.5,
+                        stagger: 0.1,
+                        ease: 'power2.out',
+                        scrollTrigger: {
+                            trigger: statsRef.current,
+                            start: 'top 90%',
+                            toggleActions: 'play none none reverse'
+                        }
+                    }
+                )
+            }
+        }, sectionRef)
         
-        return () => {
-            ScrollTrigger.getAll().forEach(trigger => trigger.kill())
-        }
+        return () => ctx.revert()
     }, [])
 
     return (
-        <section ref={sectionRef} className="py-16 sm:py-24 bg-[var(--te-dark)] overflow-hidden relative">
+        <section aria-label="Why Choose Us" ref={sectionRef} className="py-16 sm:py-24 bg-[var(--te-dark)] overflow-hidden relative">
             {/* Diagonal stripes background */}
             <div 
                 className="absolute inset-0 opacity-[0.02]"
@@ -105,7 +103,7 @@ const OurSpecs = () => {
                 <div className="mb-12 sm:mb-16">
                     <Title 
                         title='Built for Professionals' 
-                        description="Top-tier service and convenience to ensure your shopping experience is smooth, secure and completely hassle-free."
+                        description="Your trusted hardware partner in Norwood. Top-tier service, secure payments, and expert advice for a seamless shopping experience."
                         visibleButton={false}
                         dark={true}
                     />

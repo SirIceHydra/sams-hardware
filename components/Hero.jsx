@@ -1,13 +1,16 @@
 'use client'
 import Image from 'next/image'
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import CategoriesMarquee from './CategoriesMarquee'
 import Title from './Title'
 import ImageCarousel from './ImageCarousel'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { ArrowRight, Zap, Wrench, Hammer } from 'lucide-react'
+import { useProducts } from '@/shop/core/hooks/useProducts'
+import { useCategories } from '@/shop/core/hooks/useCategories'
+import CategoriesMarquee from './CategoriesMarquee'
+import { SHOP_CONFIG } from '@/shop/utils/constants'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -16,91 +19,163 @@ const Hero = () => {
     const departmentsRef = useRef(null)
     const saleRef = useRef(null)
     const heroTextRef = useRef(null)
+    const { products: hotDeals, loading: hotDealsLoading, error: hotDealsError, fetchProducts: fetchHotDeals } = useProducts()
+    const { categories, loading: categoriesLoading, error: categoriesError, fetchCategories } = useCategories()
+    const [showAllCategories, setShowAllCategories] = useState(false)
 
-    const departments = [
-        { name: 'General hardware', category: 'Hand Tools', image: '/Images/Departments/General hardware.jpeg' },
-        { name: 'Building materials', category: 'Hand Tools', image: '/Images/Departments/Building materials.jpeg' },
-        { name: 'Lighting', category: 'Electrical', image: '/Images/Departments/Lighting.jpeg' },
-        { name: 'Electrical', category: 'Electrical', image: '/Images/Departments/Electrical.jpeg' },
-        { name: 'Paint', category: 'Hand Tools', image: '/Images/Departments/Paint.jpeg' },
-        { name: 'Plumbing', category: 'Plumbing', image: '/Images/Departments/Plumbing.jpeg' },
-        { name: 'Handtools', category: 'Hand Tools', image: '/Images/Departments/Handtools.jpeg' },
-        { name: 'Powertools', category: 'Power Tools', image: '/Images/Departments/Powertools.jpeg' }
-    ]
+    useEffect(() => {
+        fetchCategories({ hideEmpty: false })
+    }, [fetchCategories])
 
-    const handleDepartmentClick = (department) => {
-        router.push(`/department/${encodeURIComponent(department.name.toLowerCase().replace(/\s+/g, '-'))}`)
+    const handleCategoryClick = (category) => {
+        router.push(`/shop?category=${category.id}`)
     }
 
-    const carouselImages = [
-        { image: '/Images/carausel_header/handtools.jpeg', department: 'Handtools', link: '/department/handtools' },
-        { image: '/Images/carausel_header/plumbing.jpeg', department: 'Plumbing', link: '/department/plumbing' },
-        { image: '/Images/carausel_header/powertools.jpeg', department: 'Powertools', link: '/department/powertools' }
-    ]
+    const carouselImages = useMemo(() => {
+        // Default static images as fallback
+        const staticImages = [
+            { image: '/images/carausel_header/handtools.jpeg', department: 'Handtools', link: '/department/handtools' },
+            { image: '/images/carausel_header/plumbing.jpeg', department: 'Plumbing', link: '/department/plumbing' },
+            { image: '/images/carausel_header/powertools.jpeg', department: 'Powertools', link: '/department/powertools' }
+        ]
+
+        if (!categories || categories.length === 0) {
+            return staticImages
+        }
+
+        // Filter categories that have images
+        const categoriesWithImages = categories.filter(cat => cat.image && cat.image.src)
+        
+        // If we have categories with images, use them
+        if (categoriesWithImages.length > 0) {
+            // Sort by count (descending) to show most popular categories first, then take top 5
+            return categoriesWithImages
+                .sort((a, b) => (b.count || 0) - (a.count || 0))
+                .slice(0, 5)
+                .map(cat => ({
+                    image: cat.image.src,
+                    department: cat.name,
+                    link: `/shop?category=${cat.id}`
+                }))
+        }
+        
+        return staticImages
+    }, [categories])
 
     // Scroll-triggered animations
     useEffect(() => {
-        // Skip scroll animations on mobile - just show content
-        const isMobile = window.innerWidth < 768
-        
-        // Hero text animation (always runs - it's the intro)
-        if (heroTextRef.current) {
-            gsap.fromTo(heroTextRef.current.children,
-                { y: 50, opacity: 0 },
-                { y: 0, opacity: 1, duration: 0.8, stagger: 0.15, ease: 'power3.out' }
-            )
-        }
+        const ctx = gsap.context(() => {
+            // Hero text animation (always runs - it's the intro)
+            if (heroTextRef.current) {
+                gsap.fromTo(heroTextRef.current.children,
+                    { y: 50, opacity: 0 },
+                    { y: 0, opacity: 1, duration: 0.8, stagger: 0.15, ease: 'power3.out' }
+                )
+            }
 
-        // Skip scroll-triggered animations on mobile
-        if (isMobile) return
-        
-        // Department cards stagger animation on scroll (desktop only)
-        if (departmentsRef.current) {
-            const cards = departmentsRef.current.querySelectorAll('.department-card')
-            gsap.fromTo(cards,
-                { y: 60, opacity: 0, scale: 0.95 },
-                {
-                    y: 0, opacity: 1, scale: 1,
-                    duration: 0.6,
-                    stagger: 0.08,
-                    ease: 'power3.out',
-                    scrollTrigger: {
-                        trigger: departmentsRef.current,
-                        start: 'top 80%',
-                        toggleActions: 'play none none reverse'
+            // Skip scroll animations on mobile
+            const isMobile = window.innerWidth < 768
+            if (isMobile) return
+            
+            // Department cards stagger animation on scroll (desktop only)
+            if (departmentsRef.current) {
+                const cards = departmentsRef.current.querySelectorAll('.department-card')
+                gsap.fromTo(cards,
+                    { y: 60, opacity: 0, scale: 0.95 },
+                    {
+                        y: 0, opacity: 1, scale: 1,
+                        duration: 0.6,
+                        stagger: 0.08,
+                        ease: 'power3.out',
+                        scrollTrigger: {
+                            trigger: departmentsRef.current,
+                            start: 'top 80%',
+                            toggleActions: 'play none none reverse'
+                        }
                     }
-                }
-            )
-        }
+                )
+            }
 
-        // Sale section animation (desktop only)
-        if (saleRef.current) {
-            gsap.fromTo(saleRef.current,
-                { y: 40, opacity: 0 },
-                {
-                    y: 0, opacity: 1,
-                    duration: 0.8,
-                    ease: 'power3.out',
-                    scrollTrigger: {
-                        trigger: saleRef.current,
-                        start: 'top 85%',
-                        toggleActions: 'play none none reverse'
+            // Sale section animation (desktop only)
+            if (saleRef.current) {
+                gsap.fromTo(saleRef.current,
+                    { y: 40, opacity: 0 },
+                    {
+                        y: 0, opacity: 1,
+                        duration: 0.8,
+                        ease: 'power3.out',
+                        scrollTrigger: {
+                            trigger: saleRef.current,
+                            start: 'top 85%',
+                            toggleActions: 'play none none reverse'
+                        }
                     }
-                }
-            )
-        }
+                )
+            }
+        })
         
-        return () => {
-            ScrollTrigger.getAll().forEach(trigger => trigger.kill())
-        }
+        return () => ctx.revert()
     }, [])
+
+    useEffect(() => {
+        fetchHotDeals({ onSale: true, perPage: 20, orderBy: 'date', order: 'desc' })
+    }, [fetchHotDeals])
+
+    const visibleCategories = Array.isArray(categories)
+        ? (showAllCategories ? categories : categories.slice(0, 8))
+        : []
+
+    // Schema.org structured data for the organization
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://samshardware.co.za'
+    const schemaData = {
+        "@context": "https://schema.org",
+        "@type": "HardwareStore",
+        "name": SHOP_CONFIG.STORE_NAME,
+        "description": "Your trusted hardware experts in Norwood, Johannesburg. Premium tools, plumbing, electrical, and construction supplies.",
+        "url": baseUrl,
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "49b Grant Avenue",
+            "addressLocality": "Norwood, Johannesburg",
+            "postalCode": "2192",
+            "addressCountry": "ZA"
+        },
+        "priceRange": "$$",
+        "openingHoursSpecification": [
+            {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+                "opens": "08:00",
+                "closes": "20:00"
+            },
+            {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": "Sunday",
+                "opens": "08:00",
+                "closes": "15:00"
+            }
+        ],
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": `${baseUrl}/shop?search={search_term_string}`
+            },
+            "query-input": "required name=search_term_string"
+        }
+    }
 
     return (
         <div className="overflow-hidden">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
+            />
+            
             {/* ═══════════════════════════════════════════════════════════════
                 HERO SECTION WITH INTEGRATED CAROUSEL - BLACK BG
                 ═══════════════════════════════════════════════════════════════ */}
-            <div className='bg-[var(--te-dark)] py-12 sm:py-16 lg:py-20 relative overflow-hidden'>
+            <section aria-label="Hero Introduction" className='bg-[var(--te-dark)] py-12 sm:py-16 lg:py-20 relative overflow-hidden'>
                 {/* Animated grid background */}
                 <div 
                     className="absolute inset-0 opacity-[0.04]"
@@ -141,8 +216,8 @@ const Hero = () => {
                                 
                                 {/* Subtext */}
                                 <p className="text-[var(--te-grey-400)] text-sm sm:text-base leading-relaxed mb-6">
-                                    Premium hardware and tools for professionals and DIY enthusiasts. 
-                                    Quality you can trust, prices you'll love.
+                                    Your trusted hardware experts in <span className="text-[var(--te-yellow)] font-medium">Norwood, Johannesburg</span>. 
+                                    Premium tools, plumbing, electrical, and construction supplies for professionals and DIY enthusiasts.
                                 </p>
                                 
                                 {/* CTA Buttons */}
@@ -151,6 +226,7 @@ const Hero = () => {
                                         onClick={() => router.push('/shop')}
                                         className="group flex items-center gap-2 px-6 py-3 bg-[var(--te-yellow)] text-[var(--te-dark)] font-bold text-xs sm:text-sm tracking-widest uppercase hover:bg-[var(--te-yellow-light)] active:translate-y-1 transition-all"
                                         style={{ boxShadow: '0 4px 0 var(--te-yellow-dark), 0 8px 30px rgba(248, 204, 40, 0.3)' }}
+                                        aria-label="Shop Now"
                                     >
                                         <Zap size={16} />
                                         Shop Now
@@ -159,6 +235,7 @@ const Hero = () => {
                                     <button 
                                         onClick={() => router.push('/about')}
                                         className="flex items-center gap-2 px-6 py-3 bg-transparent text-[var(--te-white)] font-bold text-xs sm:text-sm tracking-widest uppercase border-2 border-[var(--te-grey-500)] hover:border-[var(--te-yellow)] hover:text-[var(--te-yellow)] transition-all"
+                                        aria-label="Learn More About Us"
                                     >
                                         Learn More
                                     </button>
@@ -169,7 +246,7 @@ const Hero = () => {
                                     {[
                                         { value: '10K+', label: 'Products' },
                                         { value: '50+', label: 'Brands' },
-                                        { value: '24/7', label: 'Support' },
+                                        { value: 'Local', label: 'Experts' },
                                     ].map((stat, i) => (
                                         <div key={i} className="text-center">
                                             <div className="text-xl sm:text-2xl font-black text-[var(--te-yellow)] font-[family-name:var(--font-jetbrains)]">
@@ -190,12 +267,12 @@ const Hero = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
             {/* ═══════════════════════════════════════════════════════════════
                 DEPARTMENTS SECTION - GREY BG
                 ═══════════════════════════════════════════════════════════════ */}
-            <div className='bg-[var(--te-cream)] py-12 sm:py-20 relative'>
+            <section aria-label="Shop by Department" className='bg-[var(--te-cream)] py-12 sm:py-20 relative'>
                 {/* Dot pattern */}
                 <div 
                     className="absolute inset-0 opacity-[0.04]"
@@ -214,60 +291,64 @@ const Hero = () => {
                                 <Title title='Departments' visibleButton={false} />
                             </div>
                             <p className="text-[var(--te-grey-400)] max-w-lg mx-auto text-center text-sm leading-relaxed">
-                                Browse our comprehensive selection of hardware categories. Find exactly what you need for your next project.
+                                Explore our wide range of hardware categories, from power tools to plumbing and electrical supplies, available in Norwood.
                             </p>
+                            <div className="flex justify-center mt-6">
+                                <button
+                                    onClick={() => setShowAllCategories(prev => !prev)}
+                                    className="group flex items-center gap-2 px-6 py-3 bg-[var(--te-dark)] text-[var(--te-white)] font-bold text-xs tracking-widest uppercase hover:bg-[var(--te-charcoal)] transition-all"
+                                    style={{ boxShadow: '0 3px 0 var(--te-black)' }}
+                                    aria-label={showAllCategories ? "Show Less Categories" : "Show All Categories"}
+                                >
+                                    {showAllCategories ? 'Show Less' : 'Show All'}
+                                    <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                                </button>
+                            </div>
                         </div>
                         
                         {/* Departments grid */}
                         <div ref={departmentsRef} className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6'>
-                            {departments.map((department, index) => (
+                            {categoriesLoading && (
+                                <div className="col-span-2 md:col-span-3 lg:col-span-4 flex items-center justify-center py-8">
+                                    <div className="text-[var(--te-grey-400)] text-sm">Loading categories...</div>
+                                </div>
+                            )}
+                            {!categoriesLoading && categoriesError && (
+                                <div className="col-span-2 md:col-span-3 lg:col-span-4 flex items-center justify-center py-8">
+                                    <div className="text-[var(--te-grey-400)] text-sm">Failed to load categories</div>
+                                </div>
+                            )}
+                            {!categoriesLoading && !categoriesError && visibleCategories.map((category, index) => (
                                 <div
                                     key={index}
-                                    onClick={() => handleDepartmentClick(department)}
+                                    onClick={() => handleCategoryClick(category)}
                                     className='department-card relative aspect-[4/5] bg-[var(--te-dark)] overflow-hidden group cursor-pointer te-hover-lift'
-                                    onMouseEnter={(e) => {
-                                        const img = e.currentTarget.querySelector('img')
-                                        const label = e.currentTarget.querySelector('.department-label')
-                                        const overlay = e.currentTarget.querySelector('.department-overlay')
-                                        gsap.to(img, { scale: 1.15, duration: 0.5, ease: 'power2.out' })
-                                        gsap.to(label, { y: -8, backgroundColor: 'var(--te-yellow)', color: 'var(--te-dark)', duration: 0.3 })
-                                        gsap.to(overlay, { opacity: 0.7, duration: 0.3 })
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        const img = e.currentTarget.querySelector('img')
-                                        const label = e.currentTarget.querySelector('.department-label')
-                                        const overlay = e.currentTarget.querySelector('.department-overlay')
-                                        gsap.to(img, { scale: 1, duration: 0.5, ease: 'power2.out' })
-                                        gsap.to(label, { y: 0, backgroundColor: 'var(--te-dark)', color: 'var(--te-white)', duration: 0.3 })
-                                        gsap.to(overlay, { opacity: 0.4, duration: 0.3 })
-                                    }}
                                 >
                                     {/* Corner brackets */}
                                     <div className="absolute top-3 left-3 w-6 h-6 border-l-2 border-t-2 border-[var(--te-yellow)] opacity-0 group-hover:opacity-100 transition-opacity z-30" />
                                     <div className="absolute bottom-3 right-3 w-6 h-6 border-r-2 border-b-2 border-[var(--te-yellow)] opacity-0 group-hover:opacity-100 transition-opacity z-30" />
                                     
                                     {/* Gradient overlay */}
-                                    <div className='department-overlay absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-40 z-10 transition-opacity' />
+                                    <div className='department-overlay absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-40 group-hover:opacity-70 z-10 transition-opacity duration-300' />
                                     
                                     {/* Image */}
                                     <Image
-                                        src={department.image}
-                                        alt={department.name}
+                                        src={category.image?.src || '/Images/product-placeholder.png'}
+                                        alt={category.image?.alt || category.name}
                                         fill
-                                        className='object-cover'
+                                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                                        className='object-cover transition-transform duration-500 ease-out group-hover:scale-115'
                                     />
                                     
                                     {/* Content */}
                                     <div className='absolute inset-0 z-20 flex flex-col justify-end p-4'>
-                                        {/* Category tag */}
                                         <span className="text-[8px] sm:text-[10px] text-[var(--te-yellow)] font-bold tracking-[0.2em] uppercase mb-2">
-                                            {department.category}
+                                            {category.slug}
                                         </span>
                                         
-                                        {/* Department name */}
-                                        <div className='department-label inline-flex items-center gap-2 bg-[var(--te-dark)] text-[var(--te-white)] px-4 py-2.5 w-fit transition-all'>
+                                        <div className='department-label inline-flex items-center gap-2 bg-[var(--te-dark)] text-[var(--te-white)] px-4 py-2.5 w-fit transition-all duration-300 group-hover:-translate-y-2 group-hover:bg-[var(--te-yellow)] group-hover:text-[var(--te-dark)]'>
                                             <span className='font-bold text-xs sm:text-sm tracking-widest uppercase'>
-                                                {department.name}
+                                                {category.name}
                                             </span>
                                             <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                                         </div>
@@ -282,12 +363,12 @@ const Hero = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
             {/* ═══════════════════════════════════════════════════════════════
-                HOT DEALS / SALE MARQUEE SECTION - BLACK BG
+                HOT DEALS SECTION - BLACK BG
                 ═══════════════════════════════════════════════════════════════ */}
-            <div ref={saleRef} className='bg-[var(--te-dark)] py-12 sm:py-20 relative overflow-hidden'>
+            <section aria-label="Hot Deals" ref={saleRef} className='bg-[var(--te-dark)] py-12 sm:py-20 relative overflow-hidden'>
                 {/* Grid overlay */}
                 <div 
                     className="absolute inset-0 opacity-[0.03]"
@@ -315,9 +396,22 @@ const Hero = () => {
                         </p>
                     </div>
                 </div>
-                
-                <CategoriesMarquee />
-            </div>
+                <div className='px-4 sm:px-6 relative z-10'>
+                    <div className='max-w-7xl mx-auto'>
+                        {!hotDealsLoading && !hotDealsError && hotDeals && hotDeals.length > 0 ? (
+                            <CategoriesMarquee products={hotDeals} />
+                        ) : (
+                            <div className="te-panel-dark min-h-[160px] flex items-center justify-center p-6">
+                                {hotDealsLoading ? (
+                                    <span className="text-te-white/80">Loading hot deals...</span>
+                                ) : (
+                                    <span className="text-te-white/80">No hot deals right now</span>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </section>
         </div>
     )
 }

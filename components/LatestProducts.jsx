@@ -1,52 +1,62 @@
 'use client'
 import React, { useRef, useEffect } from 'react'
 import Title from './Title'
-import ProductCard from './ProductCard'
-import { useSelector } from 'react-redux'
+import { ProductCard } from '@/shop/ui/ProductCard'
+import { useProducts } from '@/shop/core/hooks/useProducts'
+import { useShop } from '@/shop/core/ShopProvider'
+import { LoadingSpinner } from '@/shop/ui/LoadingSpinner'
 import { Clock, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { toast } from 'react-hot-toast'
 
 gsap.registerPlugin(ScrollTrigger)
 
 const LatestProducts = () => {
     const displayQuantity = 4
-    const products = useSelector(state => state.product.list)
+    const { products, loading, error, fetchProducts } = useProducts()
+    const { cart } = useShop()
+    const { addItem } = cart
     const sectionRef = useRef(null)
     const productsRef = useRef(null)
 
+    const handleAddToCart = (product) => {
+        addItem(product, 1)
+        toast.success(`Added ${product.name} to cart`)
+    }
+
     useEffect(() => {
-        // Skip scroll animations on mobile - just show content
-        const isMobile = window.innerWidth < 768
-        if (isMobile) return
-        
-        if (!productsRef.current) return
-        
-        const cards = productsRef.current.querySelectorAll('.product-card-wrapper')
-        
-        gsap.fromTo(cards,
-            { y: 50, opacity: 0 },
-            {
-                y: 0, opacity: 1,
-                duration: 0.5,
-                stagger: 0.1,
-                ease: 'power3.out',
-                scrollTrigger: {
-                    trigger: productsRef.current,
-                    start: 'top 85%',
-                    toggleActions: 'play none none reverse'
+        fetchProducts({ perPage: displayQuantity, page: 1, orderBy: 'date', order: 'desc' })
+    }, [fetchProducts])
+    
+    useEffect(() => {
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+        if (isMobile || !productsRef.current) return
+
+        const ctx = gsap.context(() => {
+            const cards = productsRef.current.querySelectorAll('.product-card-wrapper')
+            gsap.fromTo(cards,
+                { y: 50, opacity: 0 },
+                {
+                    y: 0, opacity: 1,
+                    duration: 0.5,
+                    stagger: 0.1,
+                    ease: 'power3.out',
+                    scrollTrigger: {
+                        trigger: productsRef.current,
+                        start: 'top 85%',
+                        toggleActions: 'play none none reverse'
+                    }
                 }
-            }
-        )
+            )
+        }, productsRef)
         
-        return () => {
-            ScrollTrigger.getAll().forEach(trigger => trigger.kill())
-        }
+        return () => ctx.revert()
     }, [products])
 
     return (
-        <div ref={sectionRef} className='bg-[var(--te-cream)] py-16 sm:py-24 relative overflow-hidden'>
+        <section aria-label="New Arrivals" ref={sectionRef} className='bg-[var(--te-cream)] py-16 sm:py-24 relative overflow-hidden'>
             {/* Diagonal stripes background */}
             <div 
                 className="absolute inset-0 opacity-[0.02]"
@@ -74,7 +84,11 @@ const LatestProducts = () => {
                         <div>
                             <Title title='Latest Products' visibleButton={false} />
                             <p className="text-sm text-[var(--te-grey-400)] mt-2">
-                                Showing {products.length < displayQuantity ? products.length : displayQuantity} of {products.length} products
+                                {loading ? (
+                                    'Loading latest products...'
+                                ) : (
+                                    <>Showing {products.length < displayQuantity ? products.length : displayQuantity} of {products.length} products</>
+                                )}
                             </p>
                         </div>
                     </div>
@@ -91,14 +105,24 @@ const LatestProducts = () => {
                 
                 {/* Products grid */}
                 <div ref={productsRef} className='grid grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-8'>
-                    {products.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, displayQuantity).map((product, index) => (
-                        <div key={index} className="product-card-wrapper">
-                            <ProductCard product={product} />
+                    {loading && (
+                        <div className="col-span-2 lg:col-span-4 flex items-center justify-center py-8">
+                            <LoadingSpinner size="md" text="Loading..." />
+                        </div>
+                    )}
+                    {!loading && !error && products.slice(0, displayQuantity).map((product, index) => (
+                        <div key={product.id ?? index} className="product-card-wrapper">
+                            <ProductCard product={product} onAddToCart={handleAddToCart} />
                         </div>
                     ))}
+                    {!loading && (error || products.length === 0) && (
+                        <div className="col-span-2 lg:col-span-4 text-center text-[var(--te-grey-400)] py-8">
+                            {error || 'No products found'}
+                        </div>
+                    )}
                 </div>
             </div>
-        </div>
+        </section>
     )
 }
 

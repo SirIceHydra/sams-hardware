@@ -249,7 +249,7 @@ export default function ContactPage() {
                             onBlur={() => handleBlur('fullName')}
                             placeholder="Enter your full name"
                             required
-                            className="w-full px-4 py-2.5 border border-[var(--te-grey-200)] rounded-sm focus:outline-none focus:border-[var(--te-orange)] text-[var(--te-dark)] placeholder-[var(--te-grey-300)] bg-[var(--te-white)] font-medium text-sm tracking-wide transition-colors"
+                            className="w-full px-4 py-2.5 border border-[var(--te-grey-200)] rounded-sm focus:outline-none focus:border-[var(--te-yellow)] text-[var(--te-dark)] placeholder-[var(--te-grey-300)] bg-[var(--te-white)] font-medium text-sm tracking-wide transition-colors"
                         />
                     </div>
 
@@ -270,7 +270,7 @@ export default function ContactPage() {
                             onBlur={() => handleBlur('email')}
                             placeholder="Enter your email address"
                             required
-                            className="w-full px-4 py-2.5 border border-[var(--te-grey-200)] rounded-sm focus:outline-none focus:border-[var(--te-orange)] text-[var(--te-dark)] placeholder-[var(--te-grey-300)] bg-[var(--te-white)] font-medium text-sm tracking-wide transition-colors"
+                            className="w-full px-4 py-2.5 border border-[var(--te-grey-200)] rounded-sm focus:outline-none focus:border-[var(--te-yellow)] text-[var(--te-dark)] placeholder-[var(--te-grey-300)] bg-[var(--te-white)] font-medium text-sm tracking-wide transition-colors"
                         />
                     </div>
 
@@ -291,7 +291,7 @@ export default function ContactPage() {
                                 }}
                                 onFocus={handleSubjectFocus}
                                 onBlur={handleSubjectBlur}
-                                className="subject-dropdown-trigger w-full px-4 py-2.5 border border-[var(--te-grey-200)] rounded-sm focus:outline-none focus:border-[var(--te-orange)] text-[var(--te-dark)] bg-[var(--te-white)] text-left flex items-center justify-between font-medium text-sm tracking-wide transition-colors"
+                                className="subject-dropdown-trigger w-full px-4 py-2.5 border border-[var(--te-grey-200)] rounded-sm focus:outline-none focus:border-[var(--te-yellow)] text-[var(--te-dark)] bg-[var(--te-white)] text-left flex items-center justify-between font-medium text-sm tracking-wide transition-colors"
                                 aria-haspopup="listbox"
                                 aria-expanded={isDropdownOpen}
                             >
@@ -352,7 +352,7 @@ export default function ContactPage() {
                             placeholder="Tell us how we can help you..."
                             required
                             rows={6}
-                            className="w-full px-4 py-2.5 border border-[var(--te-grey-200)] rounded-sm focus:outline-none focus:border-[var(--te-orange)] resize-none text-[var(--te-dark)] placeholder-[var(--te-grey-300)] bg-[var(--te-white)] font-medium text-sm tracking-wide transition-colors"
+                            className="w-full px-4 py-2.5 border border-[var(--te-grey-200)] rounded-sm focus:outline-none focus:border-[var(--te-yellow)] resize-none text-[var(--te-dark)] placeholder-[var(--te-grey-300)] bg-[var(--te-white)] font-medium text-sm tracking-wide transition-colors"
                         />
                     </div>
 
@@ -361,8 +361,8 @@ export default function ContactPage() {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="w-full px-6 py-3 bg-[var(--te-orange)] rounded-sm disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold tracking-widest uppercase text-xs hover:bg-[var(--te-dark)] active:scale-[0.98] transition-all"
-                            style={{ boxShadow: '0 3px 0 rgba(200, 60, 0, 0.4)' }}
+                            className="w-full px-6 py-3 bg-[var(--te-yellow)] rounded-sm disabled:opacity-50 disabled:cursor-not-allowed text-[var(--te-dark)] font-bold tracking-widest uppercase text-xs hover:bg-[var(--te-yellow-light)] active:scale-[0.98] transition-all"
+                            style={{ boxShadow: '0 3px 0 var(--te-yellow-dark)' }}
                         >
                             {isSubmitting ? 'Sending...' : 'Send Message'}
                         </button>

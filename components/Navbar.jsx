@@ -1,12 +1,14 @@
 'use client'
-import { Search, ShoppingCart, ChevronDown, Menu, X, Zap } from "lucide-react";
+import { Search, ShoppingCart, ChevronDown, Menu, X, Zap, Loader2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import { useSelector } from "react-redux";
+import { useShop } from "@/shop/core/ShopProvider";
+import { useCategories } from "@/shop/core/hooks/useCategories";
+import { useProducts } from "@/shop/core/hooks/useProducts";
 
 gsap.registerPlugin(useGSAP);
 
@@ -14,39 +16,100 @@ const Navbar = () => {
     const router = useRouter();
     const pathname = usePathname();
 
-    const departments = [
-        { name: 'General hardware', category: 'Hand Tools' },
-        { name: 'Building materials', category: 'Hand Tools' },
-        { name: 'Lighting', category: 'Electrical' },
-        { name: 'Electrical', category: 'Electrical' },
-        { name: 'Paint', category: 'Hand Tools' },
-        { name: 'Plumbing', category: 'Plumbing' },
-        { name: 'Handtools', category: 'Hand Tools' },
-        { name: 'Powertools', category: 'Power Tools' }
-    ]
+    const { categories, loading, fetchCategories } = useCategories()
+    const { products: searchResults, loading: isSearching, fetchProducts: searchProducts } = useProducts()
 
     const [search, setSearch] = useState('')
+    const [showResults, setShowResults] = useState(false)
     const [isShopHovered, setIsShopHovered] = useState(false)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isMobileShopOpen, setIsMobileShopOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
-    const cartCount = useSelector(state => state.cart.total)
+    const { cart } = useShop()
+    const cartCount = cart.itemCount
 
     const navbarRef = useRef(null)
+    const searchContainerRef = useRef(null)
     const dropdownRef = useRef(null)
     const dropdownMenuRef = useRef(null)
     const mobileMenuRef = useRef(null)
     const isDropdownVisibleRef = useRef(false)
     const isDropdownInitializedRef = useRef(false)
     const linkRefs = useRef([])
+    const shopLinkRef = useRef(null)
+    const hoverTimeoutRef = useRef(null)
+    const mouseTrackingRef = useRef({ x: 0, y: 0 })
+    
+    // Track mouse position globally
+    useEffect(() => {
+        const handleMouseMove = (e) => {
+            mouseTrackingRef.current = { x: e.clientX, y: e.clientY };
+        };
+        window.addEventListener('mousemove', handleMouseMove);
+        return () => window.removeEventListener('mousemove', handleMouseMove);
+    }, []);
+    
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (hoverTimeoutRef.current) {
+                clearTimeout(hoverTimeoutRef.current);
+            }
+        };
+    }, [])
+
+    useEffect(() => {
+        fetchCategories({ hideEmpty: true })
+    }, [fetchCategories])
+
+    // Function to check if mouse is actually over link or menu
+    const isMouseOverShopArea = () => {
+        if (!shopLinkRef.current) return false;
+        
+        const linkRect = shopLinkRef.current.getBoundingClientRect();
+        const mouse = mouseTrackingRef.current;
+        
+        const isOverLink = mouse.x >= linkRect.left && 
+                          mouse.x <= linkRect.right &&
+                          mouse.y >= linkRect.top && 
+                          mouse.y <= linkRect.bottom;
+        
+        // Check if mouse is over any menu link (not the wrapper)
+        // This prevents checking an invisible hover zone from the wrapper
+        let isOverMenuLink = false;
+        if (dropdownMenuRef.current && isDropdownVisibleRef.current) {
+            const menuLinks = dropdownMenuRef.current.querySelectorAll('a');
+            menuLinks.forEach(link => {
+                const linkRect = link.getBoundingClientRect();
+                if (mouse.x >= linkRect.left && 
+                    mouse.x <= linkRect.right &&
+                    mouse.y >= linkRect.top && 
+                    mouse.y <= linkRect.bottom) {
+                    isOverMenuLink = true;
+                }
+            });
+        }
+        
+        return isOverLink || isOverMenuLink;
+    };
 
     // Scroll detection for navbar background change
     useEffect(() => {
         const handleScroll = () => {
+            // Mobile optimization: simpler check or debounce could be added if needed
             setIsScrolled(window.scrollY > 50)
         }
         window.addEventListener('scroll', handleScroll)
         return () => window.removeEventListener('scroll', handleScroll)
+    }, [])
+
+    // Check for mobile to optimize backdrop blur
+    const [isMobile, setIsMobile] = useState(false)
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768)
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
     }, [])
 
     // Staggered link animation on mount
@@ -96,10 +159,39 @@ const Navbar = () => {
         }
     }, [isMobileMenuOpen])
 
+    // Search debounce effect
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (search.trim()) {
+                searchProducts({ search: search, perPage: 5 })
+                setShowResults(true)
+            } else {
+                setShowResults(false)
+            }
+        }, 300)
+
+        return () => clearTimeout(timeoutId)
+    }, [search, searchProducts])
+
+    // Close search results when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+                setShowResults(false)
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+    }, [])
+
     const handleSearch = (e) => {
         e.preventDefault()
         router.push(`/shop?search=${search}`)
         setIsMobileMenuOpen(false)
+        setShowResults(false)
     }
 
     // Dropdown animations
@@ -123,49 +215,83 @@ const Navbar = () => {
             return
         }
 
-        if (isShopHovered) {
-            gsap.killTweensOf([dropdownRef.current, dropdownMenuRef.current.querySelectorAll('a')])
+        // Add a small delay to prevent rapid toggling
+        const timeoutId = setTimeout(() => {
+            if (isShopHovered) {
+                gsap.killTweensOf([dropdownRef.current, dropdownMenuRef.current.querySelectorAll('a')])
 
-            gsap.set(dropdownRef.current, { pointerEvents: 'auto' })
-            const menuItems = dropdownMenuRef.current.querySelectorAll('a')
-            menuItems.forEach(link => gsap.set(link, { pointerEvents: 'auto' }))
-
-            gsap.to(dropdownRef.current, {
-                opacity: 1,
-                y: 0,
-                scale: 1,
-                duration: 0.25,
-                ease: 'power3.out',
-                onComplete: () => { isDropdownVisibleRef.current = true }
-            })
-
-            gsap.to(menuItems, {
-                opacity: 1,
-                x: 0,
-                duration: 0.2,
-                stagger: 0.03,
-                ease: 'power2.out',
-                delay: 0.08
-            })
-        } else if (isDropdownVisibleRef.current) {
-            gsap.killTweensOf([dropdownRef.current, dropdownMenuRef.current.querySelectorAll('a')])
-
-            const menuItems = dropdownMenuRef.current.querySelectorAll('a')
-            gsap.to(menuItems, { opacity: 0, x: -10, duration: 0.1, stagger: 0.02, ease: 'power2.in' })
-            
-            gsap.to(dropdownRef.current, {
-                opacity: 0,
-                y: -12,
-                scale: 0.95,
-                duration: 0.2,
-                ease: 'power2.in',
-                delay: 0.05,
-                onComplete: () => {
-                    gsap.set(dropdownRef.current, { pointerEvents: 'none' })
-                    isDropdownVisibleRef.current = false
+                // NEVER enable pointer events on the menu wrapper div
+                // Only enable on the actual link elements inside
+                const menuItems = dropdownMenuRef.current.querySelectorAll('a')
+                
+                // Keep menu wrapper pointerEvents as 'none' ALWAYS
+                if (dropdownMenuRef.current) {
+                    dropdownMenuRef.current.style.pointerEvents = 'none';
                 }
-            })
-        }
+                
+                // Enable pointer events ONLY on the link elements
+                menuItems.forEach(link => {
+                    gsap.set(link, { pointerEvents: 'auto' })
+                })
+
+                gsap.to(dropdownRef.current, {
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    duration: 0.25,
+                    ease: 'power3.out',
+                    onComplete: () => { 
+                        isDropdownVisibleRef.current = true;
+                    }
+                })
+
+                gsap.to(menuItems, {
+                    opacity: 1,
+                    x: 0,
+                    duration: 0.2,
+                    stagger: 0.03,
+                    ease: 'power2.out',
+                    delay: 0.08
+                })
+            } else if (isDropdownVisibleRef.current) {
+                gsap.killTweensOf([dropdownRef.current, dropdownMenuRef.current.querySelectorAll('a')])
+
+                // IMMEDIATELY disable pointer events on everything
+                const menuItems = dropdownMenuRef.current.querySelectorAll('a')
+                menuItems.forEach(link => {
+                    gsap.set(link, { pointerEvents: 'none' })
+                })
+                
+                if (dropdownMenuRef.current) {
+                    dropdownMenuRef.current.style.pointerEvents = 'none';
+                }
+                gsap.set(dropdownRef.current, { pointerEvents: 'none' });
+
+                gsap.to(menuItems, { opacity: 0, x: -10, duration: 0.1, stagger: 0.02, ease: 'power2.in' })
+                
+                gsap.to(dropdownRef.current, {
+                    opacity: 0,
+                    y: -12,
+                    scale: 0.95,
+                    duration: 0.2,
+                    ease: 'power2.in',
+                    delay: 0.05,
+                    onComplete: () => {
+                        // Ensure everything is disabled
+                        menuItems.forEach(link => {
+                            gsap.set(link, { pointerEvents: 'none' })
+                        })
+                        gsap.set(dropdownRef.current, { pointerEvents: 'none' })
+                        if (dropdownMenuRef.current) {
+                            dropdownMenuRef.current.style.pointerEvents = 'none';
+                        }
+                        isDropdownVisibleRef.current = false
+                    }
+                })
+            }
+        }, 50)
+
+        return () => clearTimeout(timeoutId)
     }, [isShopHovered])
 
     // Magnetic hover effect for nav links
@@ -187,7 +313,9 @@ const Navbar = () => {
             ref={navbarRef}
             className={`sticky top-0 left-0 right-0 z-[10000] transition-all duration-500 ${
                 isScrolled 
-                    ? 'bg-[var(--te-dark)]/95 backdrop-blur-md shadow-[0_4px_30px_rgba(0,0,0,0.3)]' 
+                    ? (isMobile 
+                        ? 'bg-[var(--te-dark)] shadow-md' // Mobile: Solid background, no blur for performance
+                        : 'bg-[var(--te-dark)]/95 backdrop-blur-md shadow-[0_4px_30px_rgba(0,0,0,0.3)]') // Desktop: Blur effect
                     : 'bg-[var(--te-dark)]'
             }`}
         >
@@ -215,16 +343,46 @@ const Navbar = () => {
                                 key={item}
                                 ref={el => linkRefs.current[i] = el}
                                 className="relative"
-                                {...(item === 'Shop' ? {
-                                    onMouseEnter: () => setIsShopHovered(true),
-                                    onMouseLeave: () => setIsShopHovered(false)
-                                } : {})}
                             >
                                 <Link 
                                     href={item === 'Home' ? '/' : `/${item.toLowerCase()}`}
+                                    ref={item === 'Shop' ? shopLinkRef : null}
                                     className="relative flex items-center gap-1.5 py-2 text-sm tracking-[0.15em] uppercase hover:text-[var(--te-yellow)] transition-colors"
-                                    onMouseEnter={(e) => handleLinkHover(e, true)}
-                                    onMouseLeave={(e) => handleLinkHover(e, false)}
+                                    onMouseEnter={(e) => {
+                                        handleLinkHover(e, true);
+                                        if (item === 'Shop') {
+                                            if (hoverTimeoutRef.current) {
+                                                clearTimeout(hoverTimeoutRef.current);
+                                            }
+                                            setIsShopHovered(true);
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        handleLinkHover(e, false);
+                                        if (item === 'Shop') {
+                                            // Clear any existing timeout
+                                            if (hoverTimeoutRef.current) {
+                                                clearTimeout(hoverTimeoutRef.current);
+                                            }
+                                            // Use a shorter delay and check actual element under mouse
+                                            hoverTimeoutRef.current = setTimeout(() => {
+                                                // Get the element currently under the mouse
+                                                const elementUnderMouse = document.elementFromPoint(
+                                                    e.clientX || 0,
+                                                    e.clientY || 0
+                                                );
+                                                
+                                                // Check if mouse is over the link or menu
+                                                const isOverLink = elementUnderMouse && shopLinkRef.current?.contains(elementUnderMouse);
+                                                const isOverMenu = elementUnderMouse && dropdownMenuRef.current?.contains(elementUnderMouse);
+                                                
+                                                // Only hide if mouse is NOT over link or menu
+                                                if (!isOverLink && !isOverMenu) {
+                                                    setIsShopHovered(false);
+                                                }
+                                            }, 80);
+                                        }
+                                    }}
                                 >
                                     {item}
                                     {item === 'Shop' && (
@@ -240,25 +398,46 @@ const Navbar = () => {
                                 {item === 'Shop' && (
                                     <div
                                         ref={dropdownRef}
-                                        className="absolute top-full left-0 pt-4 w-56 z-[99999]"
+                                        className="absolute top-full left-0 w-56 z-[99999]"
                                         style={{ opacity: 0, pointerEvents: 'none' }}
-                                        onMouseEnter={() => setIsShopHovered(true)}
-                                        onMouseLeave={() => setIsShopHovered(false)}
                                     >
-                                        <div ref={dropdownMenuRef} className="bg-[var(--te-dark)] border-2 border-[var(--te-grey-500)] overflow-hidden relative">
+                                        {/* Invisible spacer to bridge gap - but not hoverable */}
+                                        <div className="h-2 w-full pointer-events-none" />
+                                        <div 
+                                            ref={dropdownMenuRef} 
+                                            className="bg-[var(--te-dark)] border-2 border-[var(--te-grey-500)] overflow-hidden relative mt-2"
+                                            style={{ pointerEvents: 'none' }}
+                                        >
                                             {/* Yellow accent bar */}
                                             <div className="h-1 bg-[var(--te-yellow)]" />
                                             
                                             <div className="py-2">
-                                                {departments.map((department, idx) => (
+                                                {(categories || []).filter(c => !c.parent || c.parent === 0).slice(0, 12).map((category) => (
                                                     <Link
-                                                        key={department.name}
-                                                        href={`/department/${encodeURIComponent(department.name.toLowerCase().replace(/\s+/g, '-'))}`}
+                                                        key={category.id}
+                                                        href={`/shop?category=${category.id}`}
                                                         className="group relative flex items-center gap-3 px-5 py-3 text-xs tracking-wider text-[var(--te-grey-200)] hover:text-[var(--te-yellow)] hover:bg-[var(--te-charcoal)] transition-all duration-150"
+                                                        style={{ pointerEvents: 'none' }}
+                                                        onMouseEnter={() => {
+                                                            if (hoverTimeoutRef.current) {
+                                                                clearTimeout(hoverTimeoutRef.current);
+                                                            }
+                                                            setIsShopHovered(true);
+                                                        }}
+                                                        onMouseLeave={() => {
+                                                            if (hoverTimeoutRef.current) {
+                                                                clearTimeout(hoverTimeoutRef.current);
+                                                            }
+                                                            hoverTimeoutRef.current = setTimeout(() => {
+                                                                if (!isMouseOverShopArea()) {
+                                                                    setIsShopHovered(false);
+                                                                }
+                                                            }, 100);
+                                                        }}
                                                     >
                                                         {/* LED indicator */}
                                                         <span className="w-1.5 h-1.5 rounded-full bg-[var(--te-grey-500)] group-hover:bg-[var(--te-yellow)] group-hover:shadow-[0_0_8px_var(--te-yellow-glow)] transition-all" />
-                                                        <span className="font-medium">{department.name}</span>
+                                                        <span className="font-medium">{category.name}</span>
                                                         {/* Hover arrow */}
                                                         <span className="ml-auto opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all text-[var(--te-yellow)]">→</span>
                                                     </Link>
@@ -279,17 +458,86 @@ const Navbar = () => {
                         ))}
 
                         {/* Search */}
-                        <form onSubmit={handleSearch} className="hidden xl:flex items-center w-56 text-xs gap-3 bg-[var(--te-charcoal)] px-4 py-3 border-2 border-[var(--te-grey-500)] hover:border-[var(--te-yellow)] focus-within:border-[var(--te-yellow)] focus-within:shadow-[0_0_20px_rgba(248,204,40,0.15)] transition-all">
-                            <Search size={16} className="text-[var(--te-grey-400)]" />
-                            <input 
-                                className="w-full bg-transparent outline-none placeholder-[var(--te-grey-500)] text-[var(--te-white)] font-semibold tracking-widest" 
-                                type="text" 
-                                placeholder="SEARCH..." 
-                                value={search} 
-                                onChange={(e) => setSearch(e.target.value)} 
-                                required 
-                            />
-                        </form>
+                        <div ref={searchContainerRef} className="relative hidden xl:block w-56">
+                            <form onSubmit={handleSearch} className="flex items-center text-xs gap-3 bg-[var(--te-charcoal)] px-4 py-3 border-2 border-[var(--te-grey-500)] hover:border-[var(--te-yellow)] focus-within:border-[var(--te-yellow)] focus-within:shadow-[0_0_20px_rgba(248,204,40,0.15)] transition-all">
+                                {isSearching ? (
+                                    <Loader2 size={16} className="text-[var(--te-yellow)] animate-spin" />
+                                ) : (
+                                    <Search size={16} className="text-[var(--te-grey-400)]" />
+                                )}
+                                <input 
+                                    className="w-full bg-transparent outline-none placeholder-[var(--te-grey-500)] text-[var(--te-white)] font-semibold tracking-widest" 
+                                    type="text" 
+                                    placeholder="SEARCH..." 
+                                    value={search} 
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    onFocus={() => {
+                                        if (search.trim()) setShowResults(true)
+                                    }}
+                                />
+                            </form>
+
+                            {/* Search Results Dropdown */}
+                            {showResults && search.trim() && (
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--te-dark)] border-2 border-[var(--te-grey-500)] shadow-xl z-[99999]">
+                                    <div className="h-1 bg-[var(--te-yellow)]" />
+                                    
+                                    {isSearching ? (
+                                        <div className="p-4 text-center text-[var(--te-grey-400)] text-xs">
+                                            Searching...
+                                        </div>
+                                    ) : searchResults?.length > 0 ? (
+                                        <div className="max-h-80 overflow-y-auto">
+                                            {searchResults.map((product) => (
+                                                <Link 
+                                                    key={product.id} 
+                                                    href={`/product/${product.id}`}
+                                                    className="flex items-center gap-3 p-3 hover:bg-[var(--te-charcoal)] transition-colors border-b border-[var(--te-grey-500)] last:border-0 group"
+                                                    onClick={() => {
+                                                        setShowResults(false)
+                                                        setSearch('')
+                                                    }}
+                                                >
+                                                    {product.images?.[0] ? (
+                                                        <div className="relative w-10 h-10 flex-shrink-0 bg-white p-0.5">
+                                                            <Image 
+                                                                src={product.images[0]} 
+                                                                alt={product.name} 
+                                                                fill
+                                                                className="object-contain"
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-10 h-10 bg-[var(--te-grey-500)] flex items-center justify-center text-[var(--te-dark)]">
+                                                            <Search size={14} />
+                                                        </div>
+                                                    )}
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs text-[var(--te-white)] font-medium truncate group-hover:text-[var(--te-yellow)] transition-colors">
+                                                            {product.name}
+                                                        </p>
+                                                        <p className="text-[10px] text-[var(--te-grey-400)] mt-0.5">
+                                                            R {parseFloat(product.price || 0).toFixed(2)}
+                                                        </p>
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                            <Link 
+                                                href={`/shop?search=${search}`}
+                                                className="block p-3 text-center text-xs font-bold text-[var(--te-yellow)] hover:bg-[var(--te-charcoal)] transition-colors uppercase tracking-wider"
+                                                onClick={() => setShowResults(false)}
+                                            >
+                                                View All Results
+                                            </Link>
+                                        </div>
+                                    ) : (
+                                        <div className="p-4 text-center text-[var(--te-grey-400)] text-xs">
+                                            No results found
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
 
                         {/* Cart - LARGER TEXT */}
                         <Link 
@@ -414,15 +662,15 @@ const Navbar = () => {
                                         <Zap size={12} />
                                         ALL PRODUCTS
                                     </Link>
-                                    {departments.map((department) => (
+                                    {(categories || []).filter(c => !c.parent || c.parent === 0).slice(0, 12).map((category) => (
                                         <Link
-                                            key={department.name}
-                                            href={`/department/${encodeURIComponent(department.name.toLowerCase().replace(/\s+/g, '-'))}`}
+                                            key={category.id}
+                                            href={`/shop?category=${category.id}`}
                                             className="flex items-center gap-3 px-6 py-3 text-xs font-medium text-[var(--te-grey-300)] hover:text-[var(--te-yellow)] hover:bg-[var(--te-grey-500)]/30 transition-colors tracking-wide"
                                             onClick={() => setIsMobileMenuOpen(false)}
                                         >
                                             <span className="w-1 h-1 rounded-full bg-current" />
-                                            {department.name}
+                                            {category.name}
                                         </Link>
                                     ))}
                                 </div>

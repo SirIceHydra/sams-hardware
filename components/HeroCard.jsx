@@ -26,12 +26,23 @@ const HeroCard = () => {
     const [hasTriggeredOnScroll, setHasTriggeredOnScroll] = useState(false)
     const [hasTriggeredOnHover, setHasTriggeredOnHover] = useState(false)
     const [hasCompletedAnimation, setHasCompletedAnimation] = useState(false)
+    const [isMobile, setIsMobile] = useState(false)
+
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768)
+        }
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
 
     const triggerHammerAnimation = useCallback(() => {
+        if (isMobile) return
         if (hasCompletedAnimation) return
         if (showHammer) return
         setShowHammer(true)
-    }, [showHammer, hasCompletedAnimation])
+    }, [showHammer, hasCompletedAnimation, isMobile])
 
     const handleHammerReturnToZero = useCallback(() => {
         setIterationCount(prev => {
@@ -65,28 +76,26 @@ const HeroCard = () => {
     useEffect(() => {
         // Skip scroll animations on mobile - just show content
         const isMobile = window.innerWidth < 768
-        if (isMobile) return
+        if (isMobile || !contentRef.current) return
         
-        if (!contentRef.current) return
-        
-        gsap.fromTo(contentRef.current.children,
-            { y: 40, opacity: 0 },
-            {
-                y: 0, opacity: 1,
-                duration: 0.6,
-                stagger: 0.1,
-                ease: 'power3.out',
-                scrollTrigger: {
-                    trigger: containerRef.current,
-                    start: 'top 80%',
-                    toggleActions: 'play none none reverse'
+        const ctx = gsap.context(() => {
+            gsap.fromTo(contentRef.current.children,
+                { y: 40, opacity: 0 },
+                {
+                    y: 0, opacity: 1,
+                    duration: 0.6,
+                    stagger: 0.1,
+                    ease: 'power3.out',
+                    scrollTrigger: {
+                        trigger: containerRef.current,
+                        start: 'top 80%',
+                        toggleActions: 'play none none reverse'
+                    }
                 }
-            }
-        )
+            )
+        }, containerRef)
         
-        return () => {
-            ScrollTrigger.getAll().forEach(trigger => trigger.kill())
-        }
+        return () => ctx.revert()
     }, [])
 
     useEffect(() => {
@@ -165,9 +174,11 @@ const HeroCard = () => {
                         <div className="absolute bottom-4 right-4 w-8 h-8 border-r-3 border-b-3 border-[var(--te-yellow)] z-20" />
                         
                         {/* 3D Scene Background - MORE VISIBLE */}
-                        <div className='absolute inset-0 z-0 left-0 sm:left-1/4 opacity-90'>
-                            <Scene isHovered={isHovered} onHammerReturnToZero={handleHammerReturnToZero} showHammer={showHammer} />
-                        </div>
+                        {!isMobile && (
+                            <div className='absolute inset-0 z-0 left-0 sm:left-1/4 opacity-90'>
+                                <Scene isHovered={isHovered} onHammerReturnToZero={handleHammerReturnToZero} showHammer={showHammer} />
+                            </div>
+                        )}
 
                         {/* Gradient overlay - REDUCED for better tool visibility */}
                         <div className="absolute inset-0 bg-gradient-to-r from-[var(--te-dark)] via-[var(--te-dark)]/70 to-transparent z-5" />

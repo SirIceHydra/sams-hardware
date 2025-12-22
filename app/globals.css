@@ -716,6 +716,15 @@
         animation: glitch 0.3s ease;
     }
     
+    /* ─── Hide Scrollbar ─── */
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    
     /* ─── Progress/Meter Bar ─── */
     .te-meter {
         height: 8px;

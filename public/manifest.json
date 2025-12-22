@@ -1,0 +1,35 @@
+{
+  "name": "Sam's Hardware - Premier Hardware Store Norwood, Johannesburg",
+  "short_name": "Sam's Hardware",
+  "description": "Premier hardware store in Norwood, Johannesburg offering professional tools, building materials, electrical supplies, plumbing, paint, and more.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAFAFA",
+  "theme_color": "#1A1918",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["shopping", "business", "hardware"],
+  "lang": "en-ZA",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false
+}
+

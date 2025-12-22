@@ -4,6 +4,8 @@ import Link from 'next/link';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { Truck, MapPin, Clock, FileText, X } from 'lucide-react';
+import { SHIPPING_CONFIG } from '@/shop/utils/constants';
+import { formatPrice } from '@/shop/utils/helpers';
 
 gsap.registerPlugin(useGSAP);
 
@@ -67,7 +69,7 @@ export default function Banner() {
                     <div className="flex items-center gap-2 shrink-0">
                         <Truck size={14} className="text-[var(--te-yellow)] flex-shrink-0" />
                         <span className='tracking-widest uppercase text-[var(--te-grey-300)] text-[9px] sm:text-[10px]'>
-                            Free Shipping on orders over <span className="text-[var(--te-yellow)] font-[family-name:var(--font-jetbrains)]">R1499</span>
+                            Free Shipping on orders over <span className="text-[var(--te-yellow)] font-[family-name:var(--font-jetbrains)]">{formatPrice(SHIPPING_CONFIG.FREE_SHIPPING_THRESHOLD)}</span>
                         </span>
                     </div>
                     

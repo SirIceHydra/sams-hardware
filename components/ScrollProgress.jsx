@@ -6,12 +6,28 @@ import { ChevronUp } from 'lucide-react'
 
 const ScrollProgress = () => {
     const [progress, setProgress] = useState(0)
+    const [isMobile, setIsMobile] = useState(false)
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768)
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
 
     useEffect(() => {
         const handleScroll = () => {
             if (typeof window === 'undefined' || typeof document === 'undefined') return
 
             const { scrollTop, scrollHeight, clientHeight } = document.documentElement
+            
+            // Mobile optimization: simplified check to reduce calculation overhead
+            if (window.innerWidth < 768) {
+                // Just toggle visibility based on scroll position (e.g., > 300px)
+                setProgress(scrollTop > 300 ? 10 : 0)
+                return
+            }
+
             const maxScrollable = scrollHeight - clientHeight
 
             if (maxScrollable <= 0) {

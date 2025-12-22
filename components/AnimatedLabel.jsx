@@ -17,6 +17,16 @@ function AnimatedLabel({ label, isActive, htmlFor }) {
         
         if (chars.length === 0) return
 
+        // Mobile optimization: Skip animation and show content immediately
+        if (window.innerWidth < 768) {
+            gsap.set(chars, { 
+                opacity: 1,
+                color: 'var(--te-dark)'
+            })
+            hasAnimatedRef.current = true
+            return
+        }
+
         gsap.set(chars, { 
             opacity: 0,
             color: 'var(--te-dark)'
@@ -42,7 +52,7 @@ function AnimatedLabel({ label, isActive, htmlFor }) {
 
             if (index > 0) {
                 tl.to(chars[index - 1], {
-                    color: 'var(--te-orange)',
+                    color: 'var(--te-yellow)',
                     duration: letterDuration,
                     ease: 'power1.out'
                 }, `-=${letterDuration}`)
@@ -52,14 +62,14 @@ function AnimatedLabel({ label, isActive, htmlFor }) {
         if (chars.length > 0) {
             const lastIndex = chars.length - 1
             tl.to(chars[lastIndex], {
-                color: 'var(--te-orange)',
+                color: 'var(--te-yellow)',
                 duration: letterDuration,
                 ease: 'power1.out'
             }, `+=${pauseDuration}`)
         }
 
         tl.to(chars, {
-            color: 'var(--te-orange)',
+            color: 'var(--te-yellow)',
             duration: wholeWordDuration,
             ease: 'power1.out'
         }, `+=${pauseDuration}`)

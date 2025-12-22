@@ -320,16 +320,19 @@ const Scene = ({ isHovered = false, onHammerReturnToZero, showHammer = true }) =
         />
 
         {/* Hammer - positioned at bottom-left vertex of smaller triangle, moved right, rotates around its own axis */}
-        <OrbitingModel
-          modelPath="/3D/Hammer.glb"
-          orbitRadius={0}
-          orbitSpeed={0}
-          rotationSpeed={{ y: 0.2, x: 0.15 }}
-          initialAngle={0}
-          targetSize={targetSize}
-          position={[0.1, -0.2, 0]}
-          isHovered={false}
-        />
+        {/* Only show if showHammer is false to avoid duplicate */}
+        {!showHammer && (
+          <OrbitingModel
+            modelPath="/3D/Hammer.glb"
+            orbitRadius={0}
+            orbitSpeed={0}
+            rotationSpeed={{ y: 0.2, x: 0.15 }}
+            initialAngle={0}
+            targetSize={targetSize}
+            position={[0.1, -0.2, 0]}
+            isHovered={false}
+          />
+        )}
 
         {/* Screw Driver - positioned at bottom-right vertex of smaller triangle, moved right, rotates around its own axis */}
         <OrbitingModel

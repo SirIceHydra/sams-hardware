@@ -8,9 +8,21 @@ import gsap from 'gsap'
 const ImageCarousel = ({ images }) => {
     const [currentIndex, setCurrentIndex] = useState(0)
     const [isTransitioning, setIsTransitioning] = useState(false)
+    const [isMobile, setIsMobile] = useState(false)
     const containerRef = useRef(null)
     const progressRef = useRef(null)
     const slideRefs = useRef([])
+
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768)
+        }
+        
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
 
     // Auto-advance with progress indicator
     useEffect(() => {
@@ -180,15 +192,17 @@ const ImageCarousel = ({ images }) => {
             </button>
             
             {/* Bottom progress bar only */}
-            <div className='absolute bottom-0 left-0 right-0 z-30'>
-                <div className="h-1.5 bg-[var(--te-grey-600)]">
-                    <div 
-                        ref={progressRef}
-                        className="h-full bg-[var(--te-yellow)] origin-left"
-                        style={{ transform: 'scaleX(0)' }}
-                    />
+            {!isMobile && (
+                <div className='absolute bottom-0 left-0 right-0 z-30'>
+                    <div className="h-1.5 bg-[var(--te-grey-600)]">
+                        <div 
+                            ref={progressRef}
+                            className="h-full bg-[var(--te-yellow)] origin-left"
+                            style={{ transform: 'scaleX(0)' }}
+                        />
+                    </div>
                 </div>
-            </div>
+            )}
             
             {/* Slide counter */}
             <div className="absolute top-6 right-6 z-30 flex items-center gap-2 bg-[var(--te-dark)]/90 px-4 py-2 border border-[var(--te-grey-500)]">
