@@ -32,12 +32,13 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Local env files
-.env
-.env*.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+# NOTE: .env files are NOT ignored - they can be committed to the repo
+# WARNING: Only commit .env files if they don't contain sensitive secrets
+# .env*.local
+# .env.development.local
+# .env.test.local
+# .env.production.local
+# .env.local
 
 # Vercel
 .vercel
